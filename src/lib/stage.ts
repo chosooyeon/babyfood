@@ -37,6 +37,18 @@ export function toYMD(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+export function addDays(ymd: string, n: number): string {
+  const d = parseDate(ymd);
+  d.setDate(d.getDate() + n);
+  return toYMD(d);
+}
+
+/** "8월 25일" — 관찰 해제일처럼 사람이 달력에서 찾을 값에 쓴다 */
+export function shortDate(ymd: string): string {
+  const d = parseDate(ymd);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
 export function today(): string {
   return toYMD(new Date());
 }

@@ -3,7 +3,7 @@
  */
 import { INGREDIENTS, type Ingredient } from "@/data/ingredients";
 import { OBSERVE_DAYS, type Trial, type TrialStatus } from "./types";
-import { parseDate, today } from "./stage";
+import { addDays, parseDate, today } from "./stage";
 
 export function daysSince(ymd: string, at: string = today()): number {
   return Math.floor((parseDate(at).getTime() - parseDate(ymd).getTime()) / 86_400_000);
@@ -25,6 +25,14 @@ export function effectiveStatus(trial: Trial, at: string = today()): TrialStatus
 /** 관찰이 끝나기까지 남은 일수 (끝났으면 0) */
 export function observeLeft(trial: Trial, at: string = today()): number {
   return Math.max(0, OBSERVE_DAYS - daysSince(trial.first_date, at));
+}
+
+/**
+ * 관찰이 풀리는 날. "N일 남음"으로 보여주면 "1일차 / 3일 남음"처럼
+ * 서로 안 맞아 보이는 문구가 나온다 — 날짜는 그런 게 없다.
+ */
+export function observeEndDate(trial: Trial): string {
+  return addDays(trial.first_date, OBSERVE_DAYS);
 }
 
 export type IngredientState = {

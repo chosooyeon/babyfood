@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { X, Plus, Search, AlertTriangle, Lock } from "lucide-react";
-import { CATEGORIES, INGREDIENTS, type Category } from "@/data/ingredients";
+import { CATEGORIES, INGREDIENTS } from "@/data/ingredients";
 import { REACTION_META, type Reaction } from "@/lib/types";
 import { addMeal } from "@/app/actions";
 

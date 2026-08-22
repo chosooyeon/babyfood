@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { X, Lock, Check, Hourglass, AlertTriangle, BookOpen } from "lucide-react";
 import { CATEGORIES, RISK_LABEL } from "@/data/ingredients";
-import type { IngredientState } from "@/lib/derive";
+import { observeEndDate, type IngredientState } from "@/lib/derive";
 import { SYMPTOM_META, type Symptom } from "@/lib/types";
+import { shortDate } from "@/lib/stage";
 import TrialSheet from "./TrialSheet";
 import { Bar, Card } from "./ui";
 
@@ -152,7 +153,7 @@ function Detail({
   months: number;
   onClose: () => void;
 }) {
-  const { ingredient: i, trial, status, allowed, observeLeft } = state;
+  const { ingredient: i, trial, status, allowed } = state;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-ink/30" onClick={onClose}>
@@ -195,7 +196,7 @@ function Detail({
               {status === "safe"
                 ? "✅ 안전 확인"
                 : status === "testing"
-                  ? `⏳ 관찰중 · ${observeLeft}일 남음`
+                  ? `⏳ 관찰중 · ${shortDate(observeEndDate(trial!))} 해제`
                   : "⚠️ 이상반응 기록됨"}
             </p>
             <p className="mt-1 text-muted">처음 먹인 날 {trial.first_date}</p>

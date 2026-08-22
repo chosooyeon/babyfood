@@ -6,8 +6,8 @@ import MealSheet from "@/components/MealSheet";
 import TrialSheet from "@/components/TrialSheet";
 import { getBaby, getMealsOn, getTrials } from "@/lib/queries";
 import { deleteMeal, setTrialStatus } from "./actions";
-import { dayCount, daysToNextStage, monthsOld, stageOf, today } from "@/lib/stage";
-import { buildStates, recommend, watching, progress } from "@/lib/derive";
+import { dayCount, daysToNextStage, monthsOld, shortDate, stageOf, today } from "@/lib/stage";
+import { buildStates, recommend, watching, progress, observeEndDate } from "@/lib/derive";
 import { BY_ID } from "@/data/ingredients";
 import { OBSERVE_DAYS, REACTION_META } from "@/lib/types";
 
@@ -90,14 +90,15 @@ export default async function TodayPage() {
                     {s.ingredient.emoji} {s.ingredient.name} 관찰 {passed + 1}일차
                   </b>
                   <span className="text-[11px] font-bold text-butter">
-                    {s.observeLeft}일 남음
+                    {shortDate(observeEndDate(s.trial!))} 해제
                   </span>
                 </div>
                 <div className="mt-2">
                   <Bar value={(passed + 1) / OBSERVE_DAYS} tone="butter" />
                 </div>
                 <p className="mt-2 text-xs text-ink/70">
-                  관찰이 끝날 때까지 새 재료는 쉬어가요. 이상이 있으면 바로 기록하세요.
+                  {shortDate(observeEndDate(s.trial!))}까지 새 재료는 쉬어가요. 이상이 있으면 바로
+                  기록하세요.
                 </p>
                 <div className="mt-3 flex gap-2">
                   <form action={setTrialStatus} className="flex-1">
