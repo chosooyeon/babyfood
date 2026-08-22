@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3100",
     "lint": "eslint",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "setup": "node scripts/setup.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
