@@ -1,29 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getMealsOn } from "@/lib/queries";
-import { COOKIE, sessionToken } from "@/lib/auth";
 import type { Reaction, Symptom, TrialStatus } from "@/lib/types";
-
-const YEAR = 60 * 60 * 24 * 365;
-
-export async function login(_prev: string | null, form: FormData): Promise<string | null> {
-  const password = String(form.get("password") ?? "");
-  if (!process.env.APP_PASSWORD) return "APP_PASSWORD 환경변수가 설정되지 않았어요.";
-  if (password !== process.env.APP_PASSWORD) return "비밀번호가 달라요.";
-
-  (await cookies()).set(COOKIE, await sessionToken(password), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: YEAR,
-    path: "/",
-  });
-  redirect("/");
-}
 
 export async function saveBaby(form: FormData) {
   const name = String(form.get("name") ?? "").trim();

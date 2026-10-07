@@ -10,7 +10,7 @@
 | 앱이 아니라 **웹(PWA)** | 아이폰은 네이티브 배포에 개발자 계정($99/년)·Xcode가 필요하다. PWA 는 Safari → 공유 → **홈 화면에 추가** 하면 아이콘 + 전체화면으로 뜨고, push 하면 바로 반영된다 |
 | **별도 저장소** | `automake-youtube/admin` 은 localhost 전용이고 증권 API 키가 붙어 있다. 폰에서 쓰려면 공개 배포해야 하는데 그러면 그게 같이 나간다 |
 | DB 접근을 **서버에서만** | Supabase 키가 브라우저 번들에 실리면 URL 을 아는 사람이 아기 기록을 읽고 쓴다. `src/lib/db.ts` 는 `server-only` 라 클라이언트에서 import 하면 빌드가 깨진다 |
-| 비밀번호 **1개** | 나 혼자 쓴다. 계정·이메일 인증은 과하다. 쿠키 1년이라 폰에서 한 번만 입력 |
+| 로그인 **없음** | 나 혼자 쓴다. 주소를 아는 사람만 접근한다는 전제. 다시 잠그고 싶으면 git 이력에서 `src/proxy.ts`·`src/lib/auth.ts`·`src/app/login` 을 되살린다 |
 | 3일 관찰을 **날짜에서 파생** | "3일 지났으니 안전"을 DB 에 쓰면 매일 돌 배치가 필요하고, 앱을 며칠 안 열면 상태가 썩는다. `derive.ts` 가 그때그때 계산한다 |
 
 ## 화면 4개
@@ -39,7 +39,6 @@ cp .env.example .env.local
 ```
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...   # anon 말고 service_role
-APP_PASSWORD=원하는비밀번호
 ```
 
 > `service_role` 키는 절대 클라이언트로 나가면 안 된다. 이 앱은 서버에서만 쓰고
@@ -59,7 +58,7 @@ gh repo create babyfood --private --source=. --push
 ```
 
 1. https://vercel.com → Add New Project → 방금 만든 저장소 선택
-2. **Environment Variables** 에 위 3개를 그대로 입력
+2. **Environment Variables** 에 위 2개를 그대로 입력
 3. Deploy
 
 ### 아이폰 홈 화면에 올리기
