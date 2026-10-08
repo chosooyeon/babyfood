@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { ArrowLeft, LogOut, RefreshCw } from "lucide-react";
+import { LogOut, RefreshCw } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Card } from "@/components/ui";
@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { ADMIN_COOKIE, isAdmin } from "@/lib/admin-auth";
 import { track } from "@/lib/track";
 import AdminLogin from "./AdminLogin";
+import Shell from "./Shell";
 import VisitsChart from "./VisitsChart";
 import { adminLogout } from "./actions";
 
@@ -91,6 +92,7 @@ export default async function AdminPage() {
 
   return (
     <Shell
+      tab="status"
       right={
         <form action={adminLogout}>
           <SubmitButton className="gap-1 text-xs font-semibold text-muted">
@@ -280,24 +282,6 @@ function Dashboard({ stats }: { stats: Stats }) {
         집계 {ago(stats.generated_at)} · 방문 기록은 90일 지나면 자동 삭제
       </p>
     </>
-  );
-}
-
-function Shell({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
-  return (
-    <main
-      className="mx-auto w-full max-w-md px-4 pb-12"
-      style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs font-semibold text-muted">
-          <ArrowLeft size={14} /> 앱으로
-        </Link>
-        <h1 className="text-base font-extrabold">관리</h1>
-        <div className="min-w-12 text-right">{right}</div>
-      </div>
-      {children}
-    </main>
   );
 }
 
