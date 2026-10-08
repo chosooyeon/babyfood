@@ -13,7 +13,7 @@ import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
 const FILE = ".env.local";
-const KEYS = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+const KEYS = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ADMIN_KEY"];
 const PLACEHOLDER = /^(https:\/\/xxx|eyJhbGciOi\.\.\.|change-me$)/;
 
 const c = {
@@ -36,6 +36,7 @@ function parseEnv(text) {
 const HINTS = {
   SUPABASE_URL: "Supabase → Project Settings → API → Project URL  (https://....supabase.co)",
   SUPABASE_SERVICE_ROLE_KEY: "같은 화면의 service_role 키  (anon 아님! 'secret' 이라고 적혀 있는 쪽)",
+  ADMIN_KEY: "/admin 관리 화면을 열 때 물어볼 비밀키. 아무거나 길게",
 };
 
 const env = existsSync(FILE) ? parseEnv(await readFile(FILE, "utf8")) : {};

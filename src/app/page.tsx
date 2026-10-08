@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Trash2 } from "lucide-react";
 import Screen from "@/components/Screen";
+import SubmitButton from "@/components/SubmitButton";
 import { Card, SectionTitle, Empty, Bar } from "@/components/ui";
 import MealSheet from "@/components/MealSheet";
 import TrialSheet from "@/components/TrialSheet";
@@ -10,11 +11,14 @@ import { dayCount, daysToNextStage, monthsOld, shortDate, stageOf, today } from 
 import { buildStates, recommend, watching, progress, observeEndDate } from "@/lib/derive";
 import { BY_ID } from "@/data/ingredients";
 import { OBSERVE_DAYS, REACTION_META } from "@/lib/types";
+import { track } from "@/lib/track";
 
 export const dynamic = "force-dynamic";
 
 export default async function TodayPage() {
-  const baby = await getBaby();
+  await track("/");
+  const at = today();
+  const [baby, trials, meals] = await Promise.all([getBaby(), getTrials(), getMealsOn(at)]);
 
   if (!baby) {
     return (
@@ -34,12 +38,10 @@ export default async function TodayPage() {
     );
   }
 
-  const at = today();
   const months = monthsOld(baby.birth_date, at);
   const stage = stageOf(months);
   const next = daysToNextStage(baby.birth_date, at);
 
-  const [trials, meals] = await Promise.all([getTrials(), getMealsOn(at)]);
   const states = buildStates(trials, months, at);
   const observing = watching(states);
   const suggestions = recommend(states);
@@ -104,9 +106,12 @@ export default async function TodayPage() {
                   <form action={setTrialStatus} className="flex-1">
                     <input type="hidden" name="ingredient_id" value={s.ingredient.id} />
                     <input type="hidden" name="status" value="safe" />
-                    <button className="w-full rounded-xl bg-mint py-2.5 text-xs font-bold text-white">
+                    <SubmitButton
+                      pendingLabel="저장 중…"
+                      className="w-full rounded-xl bg-mint py-2.5 text-xs font-bold text-white"
+                    >
                       괜찮아요 👍
-                    </button>
+                    </SubmitButton>
                   </form>
                   <TrialSheet
                     ingredientId={s.ingredient.id}
@@ -156,9 +161,9 @@ export default async function TodayPage() {
                 {m.note ? <p className="mt-2 text-xs text-muted">{m.note}</p> : null}
                 <form action={deleteMeal} className="mt-2 text-right">
                   <input type="hidden" name="id" value={m.id} />
-                  <button className="inline-flex items-center gap-1 text-[11px] text-muted">
+                  <SubmitButton pendingLabel="삭제 중…" className="gap-1 text-[11px] text-muted">
                     <Trash2 size={12} /> 삭제
-                  </button>
+                  </SubmitButton>
                 </form>
               </Card>
             </li>

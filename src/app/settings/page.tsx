@@ -1,12 +1,15 @@
 import Screen from "@/components/Screen";
 import { Card } from "@/components/ui";
+import SubmitButton from "@/components/SubmitButton";
 import { getBaby } from "@/lib/queries";
 import { saveBaby } from "../actions";
 import { dayCount, monthsOld, stageOf, STAGES } from "@/lib/stage";
+import { track } from "@/lib/track";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  await track("/settings");
   const baby = await getBaby();
   const months = baby ? monthsOld(baby.birth_date) : 0;
   const stage = baby ? stageOf(months) : null;
@@ -39,9 +42,12 @@ export default async function SettingsPage() {
               className="mt-1 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none focus:border-peach"
             />
           </label>
-          <button className="w-full rounded-2xl bg-peach py-3.5 font-bold text-white active:scale-[.98]">
+          <SubmitButton
+            pendingLabel="저장 중…"
+            className="w-full rounded-2xl bg-peach py-3.5 font-bold text-white active:scale-[.98]"
+          >
             저장
-          </button>
+          </SubmitButton>
         </form>
 
         {baby && stage ? (

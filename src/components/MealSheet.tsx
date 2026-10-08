@@ -5,6 +5,7 @@ import { X, Plus, Search, AlertTriangle, Lock } from "lucide-react";
 import { CATEGORIES, INGREDIENTS } from "@/data/ingredients";
 import { REACTION_META, type Reaction } from "@/lib/types";
 import { addMeal } from "@/app/actions";
+import SubmitButton from "./SubmitButton";
 
 /** 서버에서 내려주는 최소 정보 — 재료가 이미 도입됐는지, 월령이 됐는지 */
 export type PickerInfo = { tried: string[]; allowed: string[] };
@@ -81,7 +82,14 @@ export default function MealSheet({
         <span className="w-6" />
       </header>
 
-      <form action={addMeal} onSubmit={() => setTimeout(reset, 0)} className="flex min-h-0 flex-1 flex-col">
+      {/* 서버 저장이 끝난 뒤 닫는다. 바로 닫으면 목록이 몇 초 뒤에 갱신돼 "안 저장된 줄" 알게 된다 */}
+      <form
+        action={async (fd) => {
+          await addMeal(fd);
+          reset();
+        }}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <input type="hidden" name="date" value={date} />
         {picked.map((id) => (
           <input key={id} type="hidden" name="ingredient_ids" value={id} />
@@ -243,12 +251,12 @@ export default function MealSheet({
           className="shrink-0 border-t border-line bg-card px-4 pt-3"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + .75rem)" }}
         >
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="저장 중…"
             className="w-full rounded-2xl bg-peach py-4 text-base font-extrabold text-white active:scale-[.98]"
           >
             저장하기
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

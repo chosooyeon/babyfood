@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getMealsOn } from "@/lib/queries";
 import type { Reaction, Symptom, TrialStatus } from "@/lib/types";
+import { track } from "@/lib/track";
 
 export async function saveBaby(form: FormData) {
+  await track("action:saveBaby");
   const name = String(form.get("name") ?? "").trim();
   const birth_date = String(form.get("birth_date") ?? "");
   if (!name || !birth_date) return;
@@ -26,6 +28,7 @@ export async function saveBaby(form: FormData) {
  * 단계가 둘이면 두 번째는 안 하게 된다.
  */
 export async function addMeal(form: FormData) {
+  await track("action:addMeal");
   const date = String(form.get("date") ?? "");
   const menu = String(form.get("menu") ?? "").trim();
   if (!date || !menu) return;
@@ -65,6 +68,7 @@ export async function addMeal(form: FormData) {
 }
 
 export async function deleteMeal(form: FormData) {
+  await track("action:deleteMeal");
   const id = String(form.get("id") ?? "");
   if (id) await db.from("meals").delete().eq("id", id);
   revalidatePath("/", "layout");
@@ -72,6 +76,7 @@ export async function deleteMeal(form: FormData) {
 
 /** 이상반응 기록 / 안전 확정 / 관찰중으로 되돌리기 */
 export async function setTrialStatus(form: FormData) {
+  await track("action:setTrialStatus");
   const ingredient_id = String(form.get("ingredient_id") ?? "");
   if (!ingredient_id) return;
 

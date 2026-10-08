@@ -41,3 +41,8 @@ export function Bar({ value, tone = "mint" }: { value: number; tone?: "mint" | "
     </div>
   );
 }
+
+/** 로딩 자리표시자 — loading.tsx 에서 실제 화면과 같은 모양으로 깐다 */
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div aria-hidden className={`animate-pulse rounded-2xl bg-sand ${className}`} />;
+}

@@ -39,6 +39,7 @@ cp .env.example .env.local
 ```
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...   # anon 말고 service_role
+ADMIN_KEY=아무문자열                      # /admin 관리 화면 비밀키
 ```
 
 > `service_role` 키는 절대 클라이언트로 나가면 안 된다. 이 앱은 서버에서만 쓰고
@@ -58,13 +59,36 @@ gh repo create babyfood --private --source=. --push
 ```
 
 1. https://vercel.com → Add New Project → 방금 만든 저장소 선택
-2. **Environment Variables** 에 위 2개를 그대로 입력
+2. **Environment Variables** 에 위 3개를 그대로 입력
 3. Deploy
 
 ### 아이폰 홈 화면에 올리기
 
 배포된 주소를 **Safari 로** 열고 (크롬 X) → 공유 버튼 → **홈 화면에 추가**.
 주소창 없는 전체화면 앱으로 뜬다.
+
+## 관리 화면 (/admin)
+
+`/admin` 은 `ADMIN_KEY` 로 잠겨 있고, 앱 하단 탭에는 안 나온다. 보여주는 것:
+
+- Supabase 연결 상태·응답 시간, Vercel 리전·배포 커밋
+- DB 용량 (무료 한도 500MB 대비), 테이블별 행 수·용량·마지막 기록
+- 최근 14일 방문 수, 7일간 어떤 기기가 몇 번 썼는지, 서버 응답 속도(평균·p95)
+- 최근 동작 30건
+
+처음 한 번 Supabase **SQL Editor** 에서 `supabase/admin.sql` 을 실행해야 한다
+(방문 기록 테이블 `visits` 와 통계 함수 `admin_stats()` 를 만든다). 방문 기록은
+`src/lib/track.ts` 가 응답을 보낸 뒤 `after()` 로 남기므로 화면 속도에는 영향이 없고,
+IP 는 해시 앞자리만 저장한다. 90일 지난 기록은 자동으로 지운다.
+
+## Supabase 가 멈췄을 때
+
+무료 플랜은 **1주일 동안 쿼리가 없으면 프로젝트가 일시중지**된다. 그러면 주소가
+DNS 에서 사라져(NXDOMAIN) 앱은 "데이터베이스에 연결할 수 없어요" 화면을 띄운다.
+supabase.com 대시보드 → 프로젝트 → **Restore project** 를 누르면 기록은 그대로 돌아온다.
+**90일을 넘기면 복구 버튼이 사라지고 주소도 회수**되니, 그 전에 복구하자.
+`vercel.json` 의 cron 이 매일 아침 6시(KST)에 `/api/keepalive` 를 한 번 열어 작은 쿼리를 보내므로,
+배포만 돼 있으면 아무도 안 써도 멈추지 않는다. 혹시 멈췄다면 cron 이 꺼진 건지 Vercel → Settings → Cron Jobs 를 확인.
 
 ## 재료 기준을 내가 보는 책으로 바꾸기
 

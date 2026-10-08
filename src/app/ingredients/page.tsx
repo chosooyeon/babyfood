@@ -3,6 +3,7 @@ import IngredientGrid from "@/components/IngredientGrid";
 import { getBaby, getTrials } from "@/lib/queries";
 import { monthsOld, today } from "@/lib/stage";
 import { buildStates } from "@/lib/derive";
+import { track } from "@/lib/track";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function IngredientsPage({
 }: {
   searchParams: Promise<{ open?: string }>;
 }) {
+  await track("/ingredients");
   const [baby, trials, { open }] = await Promise.all([getBaby(), getTrials(), searchParams]);
   const months = baby ? monthsOld(baby.birth_date, today()) : 0;
   const states = buildStates(trials, months, today());

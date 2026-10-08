@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { SYMPTOM_META, type Symptom, type TrialStatus } from "@/lib/types";
 import { setTrialStatus } from "@/app/actions";
+import SubmitButton from "./SubmitButton";
 
 /**
  * 이상반응 기록 모달.
@@ -29,6 +30,12 @@ export default function TrialSheet({
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<Symptom[]>(defaultSymptoms);
 
+  // 서버 저장이 끝난 뒤에 닫는다 — 그동안 버튼에 스피너가 돈다
+  async function submit(fd: FormData) {
+    await setTrialStatus(fd);
+    setOpen(false);
+  }
+
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
@@ -51,7 +58,7 @@ export default function TrialSheet({
               </button>
             </div>
 
-            <form action={setTrialStatus} onSubmit={() => setTimeout(() => setOpen(false), 0)}>
+            <form action={submit}>
               <input type="hidden" name="ingredient_id" value={ingredientId} />
               <input type="hidden" name="status" value="allergic" />
               {picked.map((s) => (
@@ -88,18 +95,24 @@ export default function TrialSheet({
                 className="mt-3 w-full resize-none rounded-2xl border border-line bg-cream px-4 py-3 text-sm outline-none focus:border-peach"
               />
 
-              <button className="mt-3 w-full rounded-2xl bg-berry py-3.5 font-bold text-white active:scale-[.98]">
+              <SubmitButton
+                pendingLabel="저장 중…"
+                className="mt-3 w-full rounded-2xl bg-berry py-3.5 font-bold text-white active:scale-[.98]"
+              >
                 이상반응으로 기록
-              </button>
+              </SubmitButton>
             </form>
 
             {current === "allergic" ? (
-              <form action={setTrialStatus} onSubmit={() => setTimeout(() => setOpen(false), 0)}>
+              <form action={submit}>
                 <input type="hidden" name="ingredient_id" value={ingredientId} />
                 <input type="hidden" name="status" value="safe" />
-                <button className="mt-2 w-full rounded-2xl border border-line py-3 text-sm font-bold text-muted">
+                <SubmitButton
+                  pendingLabel="저장 중…"
+                  className="mt-2 w-full rounded-2xl border border-line py-3 text-sm font-bold text-muted"
+                >
                   괜찮았어요 (기록 취소)
-                </button>
+                </SubmitButton>
               </form>
             ) : null}
           </div>

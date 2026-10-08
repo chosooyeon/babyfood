@@ -6,12 +6,14 @@ import { REACTION_META } from "@/lib/types";
 import { dayCount, parseDate } from "@/lib/stage";
 import { effectiveStatus } from "@/lib/derive";
 import type { Meal } from "@/lib/types";
+import { track } from "@/lib/track";
 
 export const dynamic = "force-dynamic";
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default async function HistoryPage() {
+  await track("/history");
   const [baby, meals, trials] = await Promise.all([getBaby(), getRecentMeals(), getTrials()]);
 
   // 날짜별로 묶는다 (쿼리가 이미 날짜 내림차순이라 순서는 그대로 유지된다)
