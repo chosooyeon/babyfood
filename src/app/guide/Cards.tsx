@@ -1,23 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-export type GuideCard = {
-  emoji: string;
-  eyebrow: string;
-  title: string;
-  body: string;
-  bullets?: string[];
-  tone: "peach" | "mint" | "butter" | "berry" | "grape";
-};
-
-const TONE: Record<GuideCard["tone"], string> = {
-  peach: "from-peach-soft to-cream",
-  mint: "from-mint-soft to-cream",
-  butter: "from-butter-soft to-cream",
-  berry: "from-berry-soft to-cream",
-  grape: "from-grape-soft to-cream",
-};
+import CardArt from "./CardArt";
+import type { GuideCard } from "./card-data";
 
 /** 좌우로 넘기는 카드. 스크롤 스냅만 쓰고, 점 표시를 위해 현재 위치만 추적한다. */
 export default function Cards({ cards }: { cards: GuideCard[] }) {
@@ -44,27 +29,30 @@ export default function Cards({ cards }: { cards: GuideCard[] }) {
         {cards.map((c, i) => (
           <article
             key={c.title}
-            className={`w-[86%] shrink-0 snap-center rounded-blob border border-line bg-gradient-to-b ${TONE[c.tone]} p-6`}
+            className="relative w-[86%] shrink-0 snap-center overflow-hidden rounded-blob border border-line p-6"
             aria-label={`${i + 1} / ${cards.length}`}
           >
-            <div className="text-4xl">{c.emoji}</div>
-            <p className="mt-4 text-[11px] font-bold tracking-wide text-muted">{c.eyebrow}</p>
-            <h2 className="mt-1 text-xl font-extrabold leading-snug tracking-tight">{c.title}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink/80">{c.body}</p>
-            {c.bullets ? (
-              <ul className="mt-4 space-y-2">
-                {c.bullets.map((b) => (
-                  <li key={b} className="flex gap-2 text-[13px] leading-snug">
-                    <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-ink/40" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <p className="mt-6 text-[11px] font-bold text-muted">
-              {i + 1} / {cards.length}
-              {i < cards.length - 1 ? " · 옆으로 넘기세요 →" : ""}
-            </p>
+            <CardArt card={c} />
+            <div className="relative">
+              <div className="text-4xl">{c.emoji}</div>
+              <p className="mt-4 text-[11px] font-bold tracking-wide text-muted">{c.eyebrow}</p>
+              <h2 className="mt-1 text-xl font-extrabold leading-snug tracking-tight">{c.title}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-ink/80">{c.body}</p>
+              {c.bullets ? (
+                <ul className="mt-4 space-y-2">
+                  {c.bullets.map((b) => (
+                    <li key={b} className="flex gap-2 text-[13px] leading-snug">
+                      <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-ink/40" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="mt-6 text-[11px] font-bold text-muted">
+                {i + 1} / {cards.length}
+                {i < cards.length - 1 ? " · 옆으로 넘기세요 →" : ""}
+              </p>
+            </div>
           </article>
         ))}
       </div>
