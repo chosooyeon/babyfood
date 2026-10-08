@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Screen from "@/components/Screen";
 import { Card } from "@/components/ui";
 import SubmitButton from "@/components/SubmitButton";
@@ -83,6 +84,13 @@ export default async function SettingsPage() {
           고치고 <code className="rounded bg-sand px-1">source</code> 에 책 이름·쪽수를 적어두세요.
         </p>
       </Card>
+
+      <Link
+        href="/guide"
+        className="mt-4 block rounded-2xl border border-line bg-card px-4 py-3 text-center text-sm font-bold text-ink/80"
+      >
+        📖 이 앱 소개 보기 · 친구에게 보내기
+      </Link>
     </Screen>
   );
 }
