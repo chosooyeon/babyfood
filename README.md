@@ -10,7 +10,7 @@
 | 앱이 아니라 **웹(PWA)** | 아이폰은 네이티브 배포에 개발자 계정($99/년)·Xcode가 필요하다. PWA 는 Safari → 공유 → **홈 화면에 추가** 하면 아이콘 + 전체화면으로 뜨고, push 하면 바로 반영된다 |
 | **별도 저장소** | `automake-youtube/admin` 은 localhost 전용이고 증권 API 키가 붙어 있다. 폰에서 쓰려면 공개 배포해야 하는데 그러면 그게 같이 나간다 |
 | DB 접근을 **서버에서만** | Supabase 키가 브라우저 번들에 실리면 URL 을 아는 사람이 아기 기록을 읽고 쓴다. `src/lib/db.ts` 는 `server-only` 라 클라이언트에서 import 하면 빌드가 깨진다 |
-| 로그인 **없음** | 나 혼자 쓴다. 주소를 아는 사람만 접근한다는 전제. 다시 잠그고 싶으면 git 이력에서 `src/proxy.ts`·`src/lib/auth.ts`·`src/app/login` 을 되살린다 |
+| 로그인 대신 **수첩 코드** | 처음 온 기기마다 `src/proxy.ts` 가 무작위 12자리 코드를 httpOnly 쿠키로 심고, 모든 행이 그 코드(`household`)로 묶인다. 다른 기기에서 이어 쓰려면 설정 탭에 코드를 입력. 비밀번호·이메일 없이 집마다 기록이 갈라진다 |
 | 3일 관찰을 **날짜에서 파생** | "3일 지났으니 안전"을 DB 에 쓰면 매일 돌 배치가 필요하고, 앱을 며칠 안 열면 상태가 썩는다. `derive.ts` 가 그때그때 계산한다 |
 
 ## 화면 4개
@@ -18,7 +18,7 @@
 - **오늘** — D+일차·단계·오늘 끼니·관찰중 배너·다음 재료 추천
 - **재료** — 도장깨기 그리드 (먹어봄 / 관찰중 / 이상반응 / 월령 미달)
 - **기록** — 날짜별 타임라인 + 이상반응 재료 목록 (병원에서 보여줄 용도)
-- **설정** — 아기 생년월일 (이거 하나로 나머지가 전부 계산됨)
+- **설정** — 아기 생년월일 (이거 하나로 나머지가 전부 계산됨) · 수첩 코드 보기·이어 쓰기
 
 ## 처음 한 번 셋업
 
@@ -40,6 +40,7 @@ cp .env.example .env.local
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...   # anon 말고 service_role
 ADMIN_KEY=아무문자열                      # /admin 관리 화면 비밀키
+CRON_SECRET=아무문자열                    # Vercel cron 이 /api/keepalive 를 부를 때 쓰는 키
 ```
 
 > `service_role` 키는 절대 클라이언트로 나가면 안 된다. 이 앱은 서버에서만 쓰고
@@ -59,13 +60,25 @@ gh repo create babyfood --private --source=. --push
 ```
 
 1. https://vercel.com → Add New Project → 방금 만든 저장소 선택
-2. **Environment Variables** 에 위 3개를 그대로 입력
+2. **Environment Variables** 에 위 4개를 그대로 입력 (CRON_SECRET 이 없으면 프로덕션에서 keepalive 가 닫힌다)
 3. Deploy
 
 ### 아이폰 홈 화면에 올리기
 
 배포된 주소를 **Safari 로** 열고 (크롬 X) → 공유 버튼 → **홈 화면에 추가**.
 주소창 없는 전체화면 앱으로 뜬다.
+
+## 수첩 코드 (기기별 기록 분리)
+
+앱은 로그인이 없지만 기록은 집마다 갈라진다. 처음 접속한 기기는 `src/proxy.ts` 에서
+무작위 코드를 받고, `src/lib/household.ts` 의 `getHousehold()` 가 모든 쿼리·액션에 그 코드를
+조건으로 건다. 설정 탭에 코드가 보이고, 다른 기기에서 같은 코드를 넣으면 같은 기록을 본다.
+
+코드를 아는 사람은 누구나 그 집 기록을 보고 고칠 수 있다 — 가족에게만 알려준다.
+폰을 바꾸거나 사이트 데이터를 지우면 새 수첩이 열리므로 코드를 메모해 두는 게 좋다.
+
+이미 쓰던 DB 라면 `supabase/migrate-household.sql` 을 한 번 실행한다. 기존 행은 전부
+그 파일 머리에 적힌 코드 한 집으로 묶이고, 설정 탭에 그 코드를 넣으면 되돌아온다.
 
 ## 관리 화면 (/admin)
 

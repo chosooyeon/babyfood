@@ -25,6 +25,8 @@ export async function track(path: string) {
     return;
   }
   const device = deviceOf(ua);
+  // 봇·크롤러는 기록하지 않는다 — 무료 DB 용량을 남이 채우게 두지 않는다
+  if (device === BOT) return;
 
   after(async () => {
     try {
@@ -32,7 +34,7 @@ export async function track(path: string) {
       await db.from("visits").insert({
         path,
         device,
-        ua: ua.slice(0, 300),
+        ua: ua.slice(0, 200),
         ip_hash,
         duration_ms: Date.now() - startedAt,
       });
@@ -43,9 +45,11 @@ export async function track(path: string) {
 }
 
 /** UA 문자열을 사람이 읽는 한 줄로. 아이폰 홈 화면 앱은 UA 에 Safari 토큰이 없다. */
+const BOT = "봇·도구";
+
 export function deviceOf(ua: string): string {
   if (!ua) return "알 수 없음";
-  if (/vercel-screenshot|bot|spider|crawler|curl|wget|python-requests/i.test(ua)) return "봇·도구";
+  if (/vercel-screenshot|bot|spider|crawler|curl|wget|python-requests|headless/i.test(ua)) return BOT;
   const os = /iPhone/.test(ua)
     ? "iPhone"
     : /iPad/.test(ua)

@@ -6,12 +6,15 @@ import { getBaby } from "@/lib/queries";
 import { saveBaby } from "../actions";
 import { dayCount, monthsOld, stageOf, STAGES } from "@/lib/stage";
 import { track } from "@/lib/track";
+import { getHousehold } from "@/lib/household";
+import { formatHouseholdCode } from "@/lib/household-code";
+import HouseholdForm from "./HouseholdForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   await track("/settings");
-  const baby = await getBaby();
+  const [baby, household] = await Promise.all([getBaby(), getHousehold()]);
   const months = baby ? monthsOld(baby.birth_date) : 0;
   const stage = baby ? stageOf(months) : null;
 
@@ -58,6 +61,23 @@ export default async function SettingsPage() {
             <b className="text-ink">{stage.label} 이유식</b>
           </p>
         ) : null}
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="text-sm font-extrabold">이 수첩의 코드</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          기록은 이 코드로 묶여요. 다른 폰이나 아빠 폰에서 같이 보려면 거기 설정 탭에 이 코드를
+          넣으세요. 코드를 아는 사람은 누구나 이 기록을 보고 고칠 수 있으니 가족에게만 알려주세요.
+        </p>
+        <p className="mt-3 select-all rounded-2xl bg-sand px-4 py-3 text-center font-mono text-lg font-extrabold tracking-[.2em]">
+          {formatHouseholdCode(household)}
+        </p>
+        <p className="mt-4 text-xs font-semibold text-muted">다른 기기의 기록 이어 쓰기</p>
+        <HouseholdForm />
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">
+          폰을 바꾸거나 브라우저 데이터를 지우면 새 수첩이 열려요. 코드를 메모해 두면 언제든 되찾을 수
+          있어요.
+        </p>
       </Card>
 
       <Card className="mt-4">
