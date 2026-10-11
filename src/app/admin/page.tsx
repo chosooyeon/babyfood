@@ -12,6 +12,7 @@ import AdminLogin from "./AdminLogin";
 import Shell from "./Shell";
 import VisitsChart from "./VisitsChart";
 import { adminLogout } from "./actions";
+import { APP_VERSION } from "@/lib/version";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +122,7 @@ export default async function AdminPage() {
           <dd className="truncate font-semibold">{env.host}</dd>
           <dt className="text-muted">서버</dt>
           <dd className="font-semibold">
-            Vercel {env.region} · {env.commit} · Node {env.node}
+            v{APP_VERSION} · Vercel {env.region} · {env.commit} · Node {env.node}
           </dd>
         </dl>
         {result.kind !== "ok" ? (

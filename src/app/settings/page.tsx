@@ -9,6 +9,7 @@ import { track } from "@/lib/track";
 import { getHousehold } from "@/lib/household";
 import { formatHouseholdCode } from "@/lib/household-code";
 import HouseholdForm from "./HouseholdForm";
+import { APP_VERSION } from "@/lib/version";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,8 @@ export default async function SettingsPage() {
       >
         📖 이 앱 소개 보기 · 친구에게 보내기
       </Link>
+
+      <p className="mt-6 text-center text-[11px] text-muted">이유식 수첩 v{APP_VERSION}</p>
     </Screen>
   );
 }

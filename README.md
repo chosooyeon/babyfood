@@ -117,6 +117,14 @@ supabase.com 대시보드 → 프로젝트 → **Restore project** 를 누르면
 
 아이콘을 바꾸려면 `scripts/make-icons.mjs` 의 SVG 를 고치고 `npm run icons`.
 
+## 버전 올리기
+
+1. `package.json` 의 `version` 을 올린다 (규칙은 CHANGELOG.md 머리에).
+2. `CHANGELOG.md` 맨 위에 새 항목을 쓴다 — 무엇이 왜 바뀌었는지, SQL 을 다시 돌려야 하는지.
+3. 커밋하고 같은 번호로 태그를 단다: `git tag v1.1.0 && git push --tags`
+
+설정 탭 바닥과 /admin 에 돌아가는 버전이 보이므로, 폰에 새 버전이 깔렸는지 거기서 확인한다.
+
 ## 안 넣은 것 (일부러)
 
 수면·수유·기저귀 기록, 사진 첨부, 통계 그래프, 공유. **매일 여는 앱은 화면이
