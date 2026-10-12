@@ -107,6 +107,13 @@ export default async function SettingsPage() {
       </Card>
 
       <Link
+        href="/samples"
+        className="mt-4 block rounded-2xl border border-peach/40 bg-peach-soft/60 px-4 py-3 text-center text-sm font-bold text-ink"
+      >
+        🎁 시판 이유식 체험팩 신청 시간표
+      </Link>
+
+      <Link
         href="/guide"
         className="mt-4 block rounded-2xl border border-line bg-card px-4 py-3 text-center text-sm font-bold text-ink/80"
       >

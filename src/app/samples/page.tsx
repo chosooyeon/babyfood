@@ -1,0 +1,326 @@
+import { headers } from "next/headers";
+import { ExternalLink, CalendarPlus, Check, Undo2 } from "lucide-react";
+import Screen from "@/components/Screen";
+import { Card, SectionTitle } from "@/components/ui";
+import SubmitButton from "@/components/SubmitButton";
+import {
+  SAMPLE_BRANDS,
+  SAMPLES_INFO_CHECKED,
+  SAMPLES_SOURCE,
+  type SampleBrand,
+} from "@/data/samples";
+import { getBaby } from "@/lib/queries";
+import { monthsOld } from "@/lib/stage";
+import {
+  ruleLabel,
+  timeLabel,
+  untilLabel,
+  upcomingOpenings,
+  type Opening,
+} from "@/lib/samples";
+import { getSampleClaims } from "@/lib/samples-queries";
+import { track } from "@/lib/track";
+import { toggleSampleClaim } from "./actions";
+import Countdown from "./Countdown";
+import TipForm from "./TipForm";
+import AlarmSettings from "./AlarmSettings";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * 시판 이유식 체험팩 신청 화면.
+ * 브랜드마다 오픈 시각이 달라 놓치기 쉬우니, "다음에 열리는 것"을 맨 위에 크게 보여주고
+ * 나머지는 오픈 순으로 줄 세운다. 신청한 브랜드는 체크해서 아래로 내린다.
+ */
+export default async function SamplesPage() {
+  await track("/samples");
+  const [claimsOrNull, baby, h] = await Promise.all([
+    getSampleClaims(),
+    getBaby(),
+    headers(),
+  ]);
+  const ready = claimsOrNull !== null;
+  const claims = claimsOrNull ?? new Set<string>();
+  // 아기 월령을 알면 브랜드마다 "지금 맞아요" 배지를 띄운다
+  const months = baby ? monthsOld(baby.birth_date) : null;
+  // 안드로이드는 webcal 구독이 안 먹는 캘린더 앱이 있어 .ics 파일 받기를 같이 보여준다
+  const android = /Android/i.test(h.get("user-agent") ?? "");
+  const openings = upcomingOpenings();
+
+  const timed = openings.filter((o) => !claims.has(o.brand.id));
+  const always = SAMPLE_BRANDS.filter(
+    (b) => b.rule.kind === "always" && !claims.has(b.id),
+  );
+  const claimed = SAMPLE_BRANDS.filter((b) => claims.has(b.id));
+  const next = timed[0];
+
+  return (
+    <Screen title="체험팩 신청">
+      <p className="-mt-2 mb-4 text-xs leading-relaxed text-muted">
+        시판 이유식은 대부분 체험팩을 무료·할인으로 보내줘요. 선착순이 많아서
+        열리는 시각을 놓치면 하루를 더 기다려야 해요.
+      </p>
+
+      {!ready ? (
+        <p className="mb-4 rounded-2xl bg-butter-soft px-4 py-3 text-xs leading-relaxed text-ink/80">
+          신청 체크·제보를 저장할 테이블이 아직 없어요. Supabase SQL Editor 에서{" "}
+          <code className="rounded bg-card px-1">
+            supabase/schema.sql
+          </code>{" "}
+          을 한 번 실행하세요.
+        </p>
+      ) : null}
+
+      {next ? <NextCard o={next} months={months} /> : null}
+
+      <SectionTitle
+        right={
+          <a href="#alarm" className="flex items-center gap-1 text-peach">
+            <CalendarPlus size={14} /> 알림 설정
+          </a>
+        }
+      >
+        오픈 시간표
+      </SectionTitle>
+      {timed.length === 0 ? (
+        <p className="text-sm text-muted">
+          시간이 정해진 브랜드는 전부 신청했어요 🎉
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {timed.map((o) => (
+            <li key={o.brand.id}>
+              <BrandCard
+                brand={o.brand}
+                opening={o}
+                ready={ready}
+                months={months}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      {always.length > 0 ? (
+        <>
+          <SectionTitle>언제든 신청</SectionTitle>
+          <ul className="space-y-2">
+            {always.map((b) => (
+              <li key={b.id}>
+                <BrandCard brand={b} ready={ready} months={months} />
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      {claimed.length > 0 ? (
+        <>
+          <SectionTitle right={`${claimed.length}곳`}>신청 끝</SectionTitle>
+          <ul className="space-y-2">
+            {claimed.map((b) => (
+              <li key={b.id}>
+                <BrandCard brand={b} claimed ready={ready} months={months} />
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      <Card className="mt-7">
+        <h2 className="text-sm font-extrabold">🔔 오픈 알림 받기</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          아이폰 캘린더에 오픈 시각을 넣고 미리 알림을 받아요. 자동 신청은 각
+          쇼핑몰이 막아 둬서 못 하지만, 알림 받고 바로 열면 돼요.
+        </p>
+        <div className="mt-4">
+          <AlarmSettings
+            brands={openings.map((o) => ({
+              id: o.brand.id,
+              name: o.brand.name,
+              emoji: o.brand.emoji,
+              rule: ruleLabel(o.brand),
+            }))}
+            claimed={claimed.map((b) => b.id)}
+            android={android}
+          />
+        </div>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="text-sm font-extrabold">
+          시간이 다르거나 빠진 브랜드가 있나요?
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          오픈 시각은 <b className="text-ink">{SAMPLES_SOURCE}</b>,
+          월령·구성·비용은 <b className="text-ink">{SAMPLES_INFO_CHECKED}</b>{" "}
+          공식 홈 기준이라 바뀌었을 수 있어요. 알려주시면 확인하고 고칠게요.
+        </p>
+        <TipForm />
+      </Card>
+    </Screen>
+  );
+}
+
+/** 아기 월령이 브랜드 권장 범위에 드는지. 범위를 모르면 null (배지 없음) */
+function fit(
+  brand: SampleBrand,
+  months: number | null,
+): "ok" | "early" | "late" | null {
+  if (months === null || brand.fromMonth === undefined) return null;
+  if (months < brand.fromMonth) return "early";
+  if (brand.toMonth !== undefined && months > brand.toMonth) return "late";
+  return "ok";
+}
+
+/**
+ * 체험팩 내용 — 월령·비용은 바로 보이고, 구성·조건은 펼쳐야 보인다.
+ * 아홉 장이 줄줄이 있는 화면이라 다 펼쳐 두면 시간표가 묻힌다.
+ */
+function PackInfo({
+  brand,
+  months,
+}: {
+  brand: SampleBrand;
+  months: number | null;
+}) {
+  const f = fit(brand, months);
+  const badge =
+    f === "ok"
+      ? { text: `지금 ${months}개월, 맞아요`, cls: "bg-mint-soft text-ink" }
+      : f === "early"
+        ? { text: `${brand.fromMonth}개월부터`, cls: "bg-sand text-muted" }
+        : f === "late"
+          ? {
+              text: `${brand.toMonth}개월까지라 지났어요`,
+              cls: "bg-sand text-muted",
+            }
+          : null;
+  const hasMore = brand.includes || brand.conditions;
+  if (!brand.months && !brand.price && !hasMore) return null;
+  return (
+    <div className="mt-2.5 space-y-1 text-xs">
+      {brand.months ? (
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="text-muted">👶 {brand.months}</span>
+          {badge ? (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}
+            >
+              {badge.text}
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {brand.price ? <p className="text-muted">💰 {brand.price}</p> : null}
+      {hasMore ? (
+        <details className="group">
+          <summary className="cursor-pointer list-none text-[11px] font-bold text-peach">
+            <span className="group-open:hidden">구성·조건 보기</span>
+            <span className="hidden group-open:inline">접기</span>
+          </summary>
+          <div className="mt-1 space-y-1 rounded-xl bg-sand/70 px-3 py-2 leading-relaxed text-ink/80">
+            {brand.includes ? <p>📦 {brand.includes}</p> : null}
+            {brand.conditions ? <p>📌 {brand.conditions}</p> : null}
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+/** 맨 위 큰 카드 — 다음에 열리는 브랜드 하나 */
+function NextCard({ o, months }: { o: Opening; months: number | null }) {
+  return (
+    <Card className="border-peach/40 bg-peach-soft/60">
+      <p className="text-[11px] font-bold text-muted">다음 오픈</p>
+      <div className="mt-1 flex items-baseline justify-between gap-3">
+        <p className="text-lg font-extrabold">
+          {o.brand.emoji} {o.brand.name}
+        </p>
+        <p className="shrink-0 text-sm font-extrabold text-peach">
+          <Countdown openAt={o.epochMs} fallback={untilLabel(o)} />
+        </p>
+      </div>
+      <p className="mt-0.5 text-xs text-muted">
+        {o.dayLabel} {timeLabel(o.time)} · {ruleLabel(o.brand)}
+      </p>
+      <PackInfo brand={o.brand} months={months} />
+      <a
+        href={o.brand.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl bg-peach py-3 text-sm font-bold text-white active:scale-[.98]"
+      >
+        {o.brand.name} 열기 <ExternalLink size={14} />
+      </a>
+    </Card>
+  );
+}
+
+function BrandCard({
+  brand,
+  opening,
+  claimed = false,
+  ready,
+  months,
+}: {
+  brand: SampleBrand;
+  opening?: Opening;
+  claimed?: boolean;
+  /** sample_claims 테이블이 있어서 체크를 저장할 수 있는지 */
+  ready: boolean;
+  months: number | null;
+}) {
+  return (
+    <Card className={`p-3.5 ${claimed ? "opacity-60" : ""}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[15px] font-extrabold">
+            {brand.emoji} {brand.name}
+          </p>
+          <p className="mt-0.5 text-xs text-muted">{ruleLabel(brand)}</p>
+        </div>
+        {opening ? (
+          <p className="shrink-0 text-xs font-extrabold text-peach">
+            <Countdown
+              openAt={opening.epochMs}
+              fallback={untilLabel(opening)}
+            />
+          </p>
+        ) : null}
+      </div>
+      <PackInfo brand={brand} months={months} />
+      <div className="mt-3 flex gap-2">
+        <a
+          href={brand.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-1 items-center justify-center gap-1 rounded-2xl bg-sand py-2.5 text-xs font-bold text-ink active:scale-[.98]"
+        >
+          사이트 열기 <ExternalLink size={12} />
+        </a>
+        {ready ? (
+          <form action={toggleSampleClaim} className="flex-1">
+            <input type="hidden" name="brand_id" value={brand.id} />
+            {claimed ? <input type="hidden" name="claimed" value="1" /> : null}
+            <SubmitButton
+              className={`w-full rounded-2xl py-2.5 text-xs font-bold active:scale-[.98] ${
+                claimed ? "bg-sand text-muted" : "bg-mint-soft text-ink"
+              }`}
+            >
+              {claimed ? (
+                <>
+                  <Undo2 size={12} /> 되돌리기
+                </>
+              ) : (
+                <>
+                  <Check size={12} /> 신청했어요
+                </>
+              )}
+            </SubmitButton>
+          </form>
+        ) : null}
+      </div>
+    </Card>
+  );
+}

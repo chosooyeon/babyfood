@@ -2,7 +2,9 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_COOKIE, ADMIN_COOKIE_PATH, adminToken, safeEqual } from "@/lib/admin-auth";
+import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
+import { ADMIN_COOKIE, ADMIN_COOKIE_PATH, adminToken, isAdmin, safeEqual } from "@/lib/admin-auth";
 
 const YEAR = 60 * 60 * 24 * 365;
 
@@ -30,4 +32,13 @@ export async function adminLogin(_prev: string | null, form: FormData): Promise<
 export async function adminLogout() {
   (await cookies()).delete({ name: ADMIN_COOKIE, path: ADMIN_COOKIE_PATH });
   redirect("/admin");
+}
+
+/** /admin/tips — 제보를 "반영함"으로 표시하거나 되돌린다. 관리자만. */
+export async function setTipDone(form: FormData) {
+  if (!(await isAdmin((await cookies()).get(ADMIN_COOKIE)?.value))) return;
+  const id = Number(form.get("id"));
+  if (!Number.isInteger(id)) return;
+  await db.from("tips").update({ done: form.get("done") === "1" }).eq("id", id);
+  revalidatePath("/admin/tips");
 }

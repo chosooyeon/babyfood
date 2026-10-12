@@ -44,6 +44,8 @@ as $$
         ('babies', (select count(*) from babies), (select max(created_at) from babies)),
         ('meals',  (select count(*) from meals),  (select max(created_at) from meals)),
         ('trials', (select count(*) from trials), (select max(created_at) from trials)),
+        ('sample_claims', (select count(*) from sample_claims), (select max(claimed_at) from sample_claims)),
+        ('tips',   (select count(*) from tips),   (select max(created_at) from tips)),
         ('visits', (select count(*) from visits), (select max(ts) from visits))
       ) as t(name, rows, last)
     ),

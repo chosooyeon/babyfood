@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-/** /admin 아래 화면들의 공통 틀. 왼쪽 "앱으로", 가운데 탭(현황·기획서), 오른쪽은 화면별 버튼 */
+/** /admin 아래 화면들의 공통 틀. 왼쪽 "앱으로", 가운데 탭(현황·기획서·제보), 오른쪽은 화면별 버튼 */
 export default function Shell({
   children,
   right,
@@ -9,7 +9,7 @@ export default function Shell({
 }: {
   children: React.ReactNode;
   right?: React.ReactNode;
-  tab?: "status" | "spec";
+  tab?: "status" | "spec" | "tips";
 }) {
   return (
     <main
@@ -27,6 +27,9 @@ export default function Shell({
             </TabLink>
             <TabLink href="/admin/spec" on={tab === "spec"}>
               기획서
+            </TabLink>
+            <TabLink href="/admin/tips" on={tab === "tips"}>
+              제보
             </TabLink>
           </nav>
         ) : (

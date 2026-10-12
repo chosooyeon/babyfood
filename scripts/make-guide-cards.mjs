@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * /guide 소개 카드를 PNG 로 뽑는다 → public/guide/card-1.png … card-5.png
+ * /guide 소개 카드를 PNG 로 뽑는다 → public/guide/card-1.png … card-N.png (N = card-data.ts 의 카드 수)
  *
  *   npm run build && npm run cards
  *
@@ -16,16 +16,20 @@ const CHROME = [
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
 ].find(existsSync);
 if (!CHROME) {
-  console.error("Chrome 을 찾지 못했어요. /Applications 에 Google Chrome 이 있어야 해요.");
+  console.error(
+    "Chrome 을 찾지 못했어요. /Applications 에 Google Chrome 이 있어야 해요.",
+  );
   process.exit(1);
 }
 
 const PORT = 3100;
-const COUNT = 5;
+// 카드 수는 /guide/card/N 이 404 를 줄 때까지 센다 — card-data.ts 와 따로 맞출 필요 없게
 const OUT = resolve("public/guide");
 mkdirSync(OUT, { recursive: true });
 
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], { stdio: "ignore" });
+const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+  stdio: "ignore",
+});
 const stop = () => server.kill();
 process.on("exit", stop);
 
@@ -37,17 +41,36 @@ for (let i = 0; i < 60; i++) {
   await new Promise((r) => setTimeout(r, 500));
 }
 
-for (let n = 1; n <= COUNT; n++) {
+for (let n = 1; ; n++) {
+  // 카드가 있는 번호까지만 찍는다 (card-data.ts 와 개수를 따로 맞출 필요 없게)
+  const ok = await probe(`http://localhost:${PORT}/guide/card/${n}`);
+  if (!ok) break;
   const out = resolve(OUT, `card-${n}.png`);
-  execFileSync(CHROME, [
-    "--headless=new",
-    "--hide-scrollbars",
-    "--force-device-scale-factor=1",
-    "--window-size=1080,1350",
-    "--virtual-time-budget=6000",
-    `--screenshot=${out}`,
-    `http://localhost:${PORT}/guide/card/${n}`,
-  ], { stdio: "ignore" });
+  execFileSync(
+    CHROME,
+    [
+      "--headless=new",
+      "--hide-scrollbars",
+      "--force-device-scale-factor=1",
+      "--window-size=1080,1350",
+      "--virtual-time-budget=6000",
+      `--screenshot=${out}`,
+      `http://localhost:${PORT}/guide/card/${n}`,
+    ],
+    { stdio: "ignore" },
+  );
   console.log("✓", out);
 }
 stop();
+
+/** 카드가 있으면 true. 없는 번호는 not-found 를 그리는데 스트리밍이라 상태코드가 200 일 수 있어 본문의 표식으로 본다 */
+async function probe(url) {
+  for (let i = 0; i < 2; i++) {
+    try {
+      return (await (await fetch(url)).text()).includes('id="poster"');
+    } catch {
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+  return false;
+}
