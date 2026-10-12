@@ -1,5 +1,6 @@
 -- Supabase → SQL Editor 에 통째로 붙여넣고 실행하면 끝.
--- 다시 실행해도 안전하도록 전부 if not exists.
+-- 전부 if not exists 라 다시 실행해도 안전하다. 테이블이 늘어난 버전으로 올릴 때도
+-- 별도 마이그레이션 없이 이 파일을 한 번 더 돌린다. (열이 바뀌는 큰 변경만 migrate-*.sql)
 
 create extension if not exists "pgcrypto";
 
@@ -42,6 +43,27 @@ create table if not exists trials (
   unique (household, ingredient_id)
 );
 
+-- ── 체험팩 "신청함" 체크 (집마다) ────────────────────────────
+create table if not exists sample_claims (
+  household  text not null,
+  brand_id   text not null,      -- src/data/samples.ts 의 id
+  claimed_at timestamptz not null default now(),
+  primary key (household, brand_id)
+);
+
+-- ── 제보 ─────────────────────────────────────────────────────
+-- "시간이 바뀌었어요" "이 브랜드도 있어요" 같은 것. /admin/tips 에서 읽고 코드에 반영한다.
+create table if not exists tips (
+  id         bigint generated always as identity primary key,
+  household  text not null,
+  brand      text not null,
+  detail     text not null,
+  url        text,
+  done       boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists tips_created_idx on tips (created_at desc);
+
 -- ── 잠금 ──────────────────────────────────────────────────────
 -- RLS 를 켜고 정책을 하나도 만들지 않는다 = anon 키로는 아무것도 못 읽는다.
 -- 앱은 service_role 키로 서버에서만 접근하므로 이 상태가 정상이다.
@@ -50,3 +72,5 @@ create table if not exists trials (
 alter table babies enable row level security;
 alter table meals  enable row level security;
 alter table trials enable row level security;
+alter table sample_claims enable row level security;
+alter table tips   enable row level security;

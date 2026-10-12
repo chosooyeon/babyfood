@@ -7,26 +7,51 @@ import MealSheet from "@/components/MealSheet";
 import TrialSheet from "@/components/TrialSheet";
 import { getBaby, getMealsOn, getTrials } from "@/lib/queries";
 import { deleteMeal, setTrialStatus } from "./actions";
-import { dayCount, daysToNextStage, monthsOld, shortDate, stageOf, today } from "@/lib/stage";
-import { buildStates, recommend, watching, progress, observeEndDate } from "@/lib/derive";
+import {
+  dayCount,
+  daysToNextStage,
+  monthsOld,
+  shortDate,
+  stageOf,
+  today,
+} from "@/lib/stage";
+import {
+  buildStates,
+  recommend,
+  watching,
+  progress,
+  observeEndDate,
+} from "@/lib/derive";
 import { BY_ID } from "@/data/ingredients";
 import { OBSERVE_DAYS, REACTION_META } from "@/lib/types";
 import { track } from "@/lib/track";
+import SamplesLink from "@/components/SamplesLink";
 
 export const dynamic = "force-dynamic";
 
 export default async function TodayPage() {
   await track("/");
   const at = today();
-  const [baby, trials, meals] = await Promise.all([getBaby(), getTrials(), getMealsOn(at)]);
+  const [baby, trials, meals] = await Promise.all([
+    getBaby(),
+    getTrials(),
+    getMealsOn(at),
+  ]);
 
   if (!baby) {
     return (
       <Screen>
+        <div className="mb-3 flex justify-end">
+          <SamplesLink />
+        </div>
         <Card className="text-center">
           <div className="text-4xl">🍼</div>
-          <h1 className="mt-3 text-lg font-extrabold">먼저 아기를 등록해주세요</h1>
-          <p className="mt-1 text-sm text-muted">생년월일만 있으면 나머지는 자동이에요.</p>
+          <h1 className="mt-3 text-lg font-extrabold">
+            먼저 아기를 등록해주세요
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            생년월일만 있으면 나머지는 자동이에요.
+          </p>
           <Link
             href="/settings"
             className="mt-4 inline-block rounded-2xl bg-peach px-6 py-3 font-bold text-white"
@@ -51,9 +76,16 @@ export default async function TodayPage() {
     <Screen>
       {/* ── 인사 카드 ── */}
       <section className="rounded-blob bg-gradient-to-b from-peach-soft to-cream p-5">
-        <p className="text-xs font-bold text-muted">
-          {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" })}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs font-bold text-muted">
+            {new Date().toLocaleDateString("ko-KR", {
+              month: "long",
+              day: "numeric",
+              weekday: "long",
+            })}
+          </p>
+          <SamplesLink />
+        </div>
         <h1 className="mt-1 text-2xl font-extrabold tracking-tight">
           {baby.name} · D+{dayCount(baby.birth_date, at)}
         </h1>
@@ -63,13 +95,20 @@ export default async function TodayPage() {
               생후 {months}개월 · {stage.emoji} {stage.label} 이유식
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] font-bold">
-              <span className="rounded-full bg-card px-3 py-1.5">{stage.meals}</span>
-              <span className="rounded-full bg-card px-3 py-1.5">{stage.texture}</span>
-              <span className="rounded-full bg-card px-3 py-1.5">1회 {stage.amount}</span>
+              <span className="rounded-full bg-card px-3 py-1.5">
+                {stage.meals}
+              </span>
+              <span className="rounded-full bg-card px-3 py-1.5">
+                {stage.texture}
+              </span>
+              <span className="rounded-full bg-card px-3 py-1.5">
+                1회 {stage.amount}
+              </span>
             </div>
             {next && next.days <= 14 ? (
               <p className="mt-3 text-xs font-semibold text-grape">
-                {next.days}일 뒤 {next.stage.emoji} {next.stage.label}로 넘어가요
+                {next.days}일 뒤 {next.stage.emoji} {next.stage.label}로
+                넘어가요
               </p>
             ) : null}
           </>
@@ -86,10 +125,14 @@ export default async function TodayPage() {
           {observing.map((s) => {
             const passed = OBSERVE_DAYS - s.observeLeft;
             return (
-              <Card key={s.ingredient.id} className="border-butter/40 bg-butter-soft">
+              <Card
+                key={s.ingredient.id}
+                className="border-butter/40 bg-butter-soft"
+              >
                 <div className="flex items-center justify-between">
                   <b className="text-sm">
-                    {s.ingredient.emoji} {s.ingredient.name} 관찰 {passed + 1}일차
+                    {s.ingredient.emoji} {s.ingredient.name} 관찰 {passed + 1}
+                    일차
                   </b>
                   <span className="text-[11px] font-bold text-butter">
                     {shortDate(observeEndDate(s.trial!))} 해제
@@ -99,12 +142,16 @@ export default async function TodayPage() {
                   <Bar value={(passed + 1) / OBSERVE_DAYS} tone="butter" />
                 </div>
                 <p className="mt-2 text-xs text-ink/70">
-                  {shortDate(observeEndDate(s.trial!))}까지 새 재료는 쉬어가요. 이상이 있으면 바로
-                  기록하세요.
+                  {shortDate(observeEndDate(s.trial!))}까지 새 재료는 쉬어가요.
+                  이상이 있으면 바로 기록하세요.
                 </p>
                 <div className="mt-3 flex gap-2">
                   <form action={setTrialStatus} className="flex-1">
-                    <input type="hidden" name="ingredient_id" value={s.ingredient.id} />
+                    <input
+                      type="hidden"
+                      name="ingredient_id"
+                      value={s.ingredient.id}
+                    />
                     <input type="hidden" name="status" value="safe" />
                     <SubmitButton
                       pendingLabel="저장 중…"
@@ -145,23 +192,36 @@ export default async function TodayPage() {
               <Card>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-muted">{m.slot}끼</p>
-                    <p className="truncate text-[15px] font-extrabold">{m.menu}</p>
+                    <p className="text-[11px] font-bold text-muted">
+                      {m.slot}끼
+                    </p>
+                    <p className="truncate text-[15px] font-extrabold">
+                      {m.menu}
+                    </p>
                     <p className="mt-1 text-sm">
-                      {m.ingredient_ids.map((id) => BY_ID.get(id)?.emoji ?? "•").join(" ")}
+                      {m.ingredient_ids
+                        .map((id) => BY_ID.get(id)?.emoji ?? "•")
+                        .join(" ")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-lg">{REACTION_META[m.reaction].emoji}</p>
                     {m.amount_ml ? (
-                      <p className="text-xs font-bold text-muted">{m.amount_ml}ml</p>
+                      <p className="text-xs font-bold text-muted">
+                        {m.amount_ml}ml
+                      </p>
                     ) : null}
                   </div>
                 </div>
-                {m.note ? <p className="mt-2 text-xs text-muted">{m.note}</p> : null}
+                {m.note ? (
+                  <p className="mt-2 text-xs text-muted">{m.note}</p>
+                ) : null}
                 <form action={deleteMeal} className="mt-2 text-right">
                   <input type="hidden" name="id" value={m.id} />
-                  <SubmitButton pendingLabel="삭제 중…" className="gap-1 text-[11px] text-muted">
+                  <SubmitButton
+                    pendingLabel="삭제 중…"
+                    className="gap-1 text-[11px] text-muted"
+                  >
                     <Trash2 size={12} /> 삭제
                   </SubmitButton>
                 </form>
@@ -175,7 +235,9 @@ export default async function TodayPage() {
         date={at}
         info={{
           tried: states.filter((s) => s.trial).map((s) => s.ingredient.id),
-          allowed: states.filter((s) => s.allowed && !s.ingredient.banned).map((s) => s.ingredient.id),
+          allowed: states
+            .filter((s) => s.allowed && !s.ingredient.banned)
+            .map((s) => s.ingredient.id),
         }}
         watchingNames={observing.map((s) => s.ingredient.name)}
       />

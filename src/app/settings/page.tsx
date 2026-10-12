@@ -9,6 +9,7 @@ import { track } from "@/lib/track";
 import { getHousehold } from "@/lib/household";
 import { formatHouseholdCode } from "@/lib/household-code";
 import HouseholdForm from "./HouseholdForm";
+import { APP_VERSION } from "@/lib/version";
 
 export const dynamic = "force-dynamic";
 
@@ -106,11 +107,20 @@ export default async function SettingsPage() {
       </Card>
 
       <Link
+        href="/samples"
+        className="mt-4 block rounded-2xl border border-peach/40 bg-peach-soft/60 px-4 py-3 text-center text-sm font-bold text-ink"
+      >
+        🎁 시판 이유식 체험팩 신청 시간표
+      </Link>
+
+      <Link
         href="/guide"
         className="mt-4 block rounded-2xl border border-line bg-card px-4 py-3 text-center text-sm font-bold text-ink/80"
       >
         📖 이 앱 소개 보기 · 친구에게 보내기
       </Link>
+
+      <p className="mt-6 text-center text-[11px] text-muted">이유식 수첩 v{APP_VERSION}</p>
     </Screen>
   );
 }
