@@ -59,7 +59,8 @@ export default async function SettingsPage() {
               name="birth_date"
               type="date"
               defaultValue={baby?.birth_date ?? ""}
-              className="mt-1 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none focus:border-peach"
+              // 아이폰 Safari 는 date 입력칸의 폭을 제 마음대로 잡아 카드 밖으로 삐져나간다 → appearance 를 끄고 최소 폭 0
+              className="mt-1 block min-h-[50px] w-full min-w-0 appearance-none rounded-2xl border border-line bg-cream px-4 py-3 text-left outline-none focus:border-peach"
             />
           </label>
           <SubmitButton

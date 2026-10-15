@@ -65,6 +65,19 @@ body {
   touch-action: manipulation;
 }
 
+/* 아이폰 Safari 의 날짜·시각 입력칸: 기본 모양을 끄지 않으면 w-full 을 무시하고 넘치며, 값이 가운데로 몰린다 */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.5rem;
+}
+
 /* 아기 손에 쥐여줄 일은 없지만, 길게 눌러 텍스트 선택되는 건 거슬린다 */
 button,
 a {
