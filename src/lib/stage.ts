@@ -49,8 +49,29 @@ export function shortDate(ymd: string): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
+/**
+ * 오늘 날짜 — 항상 한국 시간 기준. 서버(Vercel)는 UTC 라 자정~아침 9시 사이에 전날로 찍히는 걸 막는다.
+ * 'sv-SE' 로케일은 YYYY-MM-DD 를 그대로 내준다.
+ */
 export function today(): string {
-  return toYMD(new Date());
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+}
+
+/** 'HH:MM:SS' 든 'HH:MM' 이든 'HH:MM' 으로 */
+export function hhmm(t: string | null | undefined): string | null {
+  return t ? t.slice(0, 5) : null;
+}
+
+/** 'YYYY-MM' → 그 달의 첫날·마지막날 */
+export function monthRange(ym: string): { from: string; to: string } {
+  const [y, m] = ym.split("-").map(Number);
+  return { from: toYMD(new Date(y, m - 1, 1)), to: toYMD(new Date(y, m, 0)) };
+}
+
+export function shiftMonth(ym: string, n: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** 태어난 날이 D+1 (한국식) */

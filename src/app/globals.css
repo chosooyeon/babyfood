@@ -27,6 +27,8 @@
   --color-berry-soft: #fde3e7;
   --color-grape: #9c8ade; /* 단계 배지 */
   --color-grape-soft: #eee9fb;
+  --color-sky: #6fb6e4; /* 분유 (이유식=peach 와 짝) */
+  --color-sky-soft: #e0f0fb;
 
   /* 굴림 */
   --radius-blob: 1.75rem;

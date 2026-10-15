@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * /guide 소개 카드를 PNG 로 뽑는다 → public/guide/card-1.png … card-N.png (N = card-data.ts 의 카드 수)
+ * 링크 공유 미리보기 그림도 같이 → public/og.png (1200×630, /guide/og)
  *
  *   npm run build && npm run cards
  *
@@ -61,6 +62,23 @@ for (let n = 1; ; n++) {
   );
   console.log("✓", out);
 }
+
+// 공유 미리보기(Open Graph) 그림 — 카톡·슬랙·트위터에 링크를 붙이면 보이는 것
+const og = resolve("public/og.png");
+execFileSync(
+  CHROME,
+  [
+    "--headless=new",
+    "--hide-scrollbars",
+    "--force-device-scale-factor=1",
+    "--window-size=1200,630",
+    "--virtual-time-budget=6000",
+    `--screenshot=${og}`,
+    `http://localhost:${PORT}/guide/og`,
+  ],
+  { stdio: "ignore" },
+);
+console.log("✓", og);
 stop();
 
 /** 카드가 있으면 true. 없는 번호는 not-found 를 그리는데 스트리밍이라 상태코드가 200 일 수 있어 본문의 표식으로 본다 */

@@ -25,7 +25,17 @@ export type Meal = {
   /** 이 끼니에 들어간 재료 id 들 */
   ingredient_ids: string[];
   note: string | null;
+  /** 먹인 시각 'HH:MM' (DB 는 HH:MM:SS 로 돌려줘 읽을 때 자른다). 1.3.0 전 기록은 null */
+  fed_at: string | null;
   created_at: string;
+};
+
+/** 분유 한 번 — 수유 시계에 이유식과 같이 찍힌다 */
+export type Bottle = {
+  id: string;
+  date: string;
+  fed_at: string; // 'HH:MM'
+  amount_ml: number | null;
 };
 
 export type Trial = {

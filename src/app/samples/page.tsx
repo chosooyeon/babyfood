@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { ExternalLink, CalendarPlus, Check, Undo2 } from "lucide-react";
 import Screen from "@/components/Screen";
@@ -13,19 +14,33 @@ import { getBaby } from "@/lib/queries";
 import { monthsOld } from "@/lib/stage";
 import {
   ruleLabel,
-  timeLabel,
   untilLabel,
   upcomingOpenings,
   type Opening,
 } from "@/lib/samples";
 import { getSampleClaims } from "@/lib/samples-queries";
+import { nowKST } from "@/lib/samples";
+import OpenTimeline from "./OpenTimeline";
+
+/**
+ * 캘린더(webcal) 알림 — 실제로 울리는지 확인될 때까지 화면에서 숨긴다 (코드·/samples/calendar.ics 는 그대로).
+ * 확인되면 true 로.
+ */
+const SHOW_ALARM = false;
 import { track } from "@/lib/track";
 import { toggleSampleClaim } from "./actions";
 import Countdown from "./Countdown";
-import TipForm from "./TipForm";
+import Link from "next/link";
 import AlarmSettings from "./AlarmSettings";
 
 export const dynamic = "force-dynamic";
+
+const BRAND_NAMES = SAMPLE_BRANDS.map((b) => b.name);
+export const metadata: Metadata = {
+  title: "시판 이유식 체험팩 신청 시간표",
+  description: `${BRAND_NAMES.slice(0, 4).join("·")} 등 시판 이유식 ${SAMPLE_BRANDS.length}개 브랜드의 체험팩 오픈 시각·받을 수 있는 월령·비용을 한 화면에. 다음에 열리는 브랜드와 카운트다운, 아이폰 캘린더 알림까지.`,
+  alternates: { canonical: "/samples" },
+};
 
 /**
  * 시판 이유식 체험팩 신청 화면.
@@ -46,13 +61,14 @@ export default async function SamplesPage() {
   // 안드로이드는 webcal 구독이 안 먹는 캘린더 앱이 있어 .ics 파일 받기를 같이 보여준다
   const android = /Android/i.test(h.get("user-agent") ?? "");
   const openings = upcomingOpenings();
+  const k = nowKST();
+  const nowMin = k.getUTCHours() * 60 + k.getUTCMinutes();
 
   const timed = openings.filter((o) => !claims.has(o.brand.id));
   const always = SAMPLE_BRANDS.filter(
     (b) => b.rule.kind === "always" && !claims.has(b.id),
   );
   const claimed = SAMPLE_BRANDS.filter((b) => claims.has(b.id));
-  const next = timed[0];
 
   return (
     <Screen title="체험팩 신청">
@@ -71,13 +87,15 @@ export default async function SamplesPage() {
         </p>
       ) : null}
 
-      {next ? <NextCard o={next} months={months} /> : null}
+      <OpenTimeline openings={timed} nowMin={nowMin} months={months} />
 
       <SectionTitle
         right={
-          <a href="#alarm" className="flex items-center gap-1 text-peach">
-            <CalendarPlus size={14} /> 알림 설정
-          </a>
+          SHOW_ALARM ? (
+            <a href="#alarm" className="flex items-center gap-1 text-peach">
+              <CalendarPlus size={14} /> 알림 설정
+            </a>
+          ) : undefined
         }
       >
         오픈 시간표
@@ -87,45 +105,35 @@ export default async function SamplesPage() {
           시간이 정해진 브랜드는 전부 신청했어요 🎉
         </p>
       ) : (
-        <ul className="space-y-2">
+        <Slider>
           {timed.map((o) => (
-            <li key={o.brand.id}>
-              <BrandCard
-                brand={o.brand}
-                opening={o}
-                ready={ready}
-                months={months}
-              />
-            </li>
+            <BrandCard key={o.brand.id} brand={o.brand} opening={o} ready={ready} months={months} />
           ))}
-        </ul>
+        </Slider>
       )}
       {always.length > 0 ? (
         <>
           <SectionTitle>언제든 신청</SectionTitle>
-          <ul className="space-y-2">
+          <Slider>
             {always.map((b) => (
-              <li key={b.id}>
-                <BrandCard brand={b} ready={ready} months={months} />
-              </li>
+              <BrandCard key={b.id} brand={b} ready={ready} months={months} />
             ))}
-          </ul>
+          </Slider>
         </>
       ) : null}
 
       {claimed.length > 0 ? (
         <>
           <SectionTitle right={`${claimed.length}곳`}>신청 끝</SectionTitle>
-          <ul className="space-y-2">
+          <Slider>
             {claimed.map((b) => (
-              <li key={b.id}>
-                <BrandCard brand={b} claimed ready={ready} months={months} />
-              </li>
+              <BrandCard key={b.id} brand={b} claimed ready={ready} months={months} />
             ))}
-          </ul>
+          </Slider>
         </>
       ) : null}
 
+      {SHOW_ALARM ? (
       <Card className="mt-7">
         <h2 className="text-sm font-extrabold">🔔 오픈 알림 받기</h2>
         <p className="mt-1 text-xs leading-relaxed text-muted">
@@ -145,18 +153,15 @@ export default async function SamplesPage() {
           />
         </div>
       </Card>
+      ) : null}
 
-      <Card className="mt-4">
-        <h2 className="text-sm font-extrabold">
-          시간이 다르거나 빠진 브랜드가 있나요?
-        </h2>
-        <p className="mt-1 text-xs leading-relaxed text-muted">
-          오픈 시각은 <b className="text-ink">{SAMPLES_SOURCE}</b>,
-          월령·구성·비용은 <b className="text-ink">{SAMPLES_INFO_CHECKED}</b>{" "}
-          공식 홈 기준이라 바뀌었을 수 있어요. 알려주시면 확인하고 고칠게요.
-        </p>
-        <TipForm />
-      </Card>
+      <p className="mt-6 text-center text-[11px] leading-relaxed text-muted [word-break:keep-all]">
+        오픈 시각은 {SAMPLES_SOURCE}, 월령·구성·비용은 {SAMPLES_INFO_CHECKED} 공식 홈 기준이라 바뀌었을 수 있어요.
+        <br />
+        <Link href="/settings/contact?topic=체험팩 시간표" className="font-bold text-peach underline underline-offset-2">
+          시간이 다르거나 빠진 브랜드 알려주기
+        </Link>
+      </p>
     </Screen>
   );
 }
@@ -228,32 +233,20 @@ function PackInfo({
   );
 }
 
-/** 맨 위 큰 카드 — 다음에 열리는 브랜드 하나 */
-function NextCard({ o, months }: { o: Opening; months: number | null }) {
+/**
+ * 옆으로 넘기는 카드 줄. 한 장이 화면의 4/5 를 차지해 다음 장이 살짝 보인다 (더 있다는 신호).
+ * 스크롤 스냅만 쓰고 자바스크립트는 없다.
+ */
+function Slider({ children }: { children: React.ReactNode[] }) {
+  const n = children.length;
   return (
-    <Card className="border-peach/40 bg-peach-soft/60">
-      <p className="text-[11px] font-bold text-muted">다음 오픈</p>
-      <div className="mt-1 flex items-baseline justify-between gap-3">
-        <p className="text-lg font-extrabold">
-          {o.brand.emoji} {o.brand.name}
-        </p>
-        <p className="shrink-0 text-sm font-extrabold text-peach">
-          <Countdown openAt={o.epochMs} fallback={untilLabel(o)} />
-        </p>
-      </div>
-      <p className="mt-0.5 text-xs text-muted">
-        {o.dayLabel} {timeLabel(o.time)} · {ruleLabel(o.brand)}
-      </p>
-      <PackInfo brand={o.brand} months={months} />
-      <a
-        href={o.brand.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl bg-peach py-3 text-sm font-bold text-white active:scale-[.98]"
-      >
-        {o.brand.name} 열기 <ExternalLink size={14} />
-      </a>
-    </Card>
+    <div className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {children.map((c, i) => (
+        <div key={i} className={`shrink-0 snap-center ${n === 1 ? "w-full" : "w-[80%]"}`}>
+          {c}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -272,11 +265,12 @@ function BrandCard({
   months: number | null;
 }) {
   return (
-    <Card className={`p-3.5 ${claimed ? "opacity-60" : ""}`}>
+    <Card className={`flex h-full flex-col p-4 ${claimed ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[15px] font-extrabold">
-            {brand.emoji} {brand.name}
+            <span className="mr-1 align-middle text-2xl">{brand.emoji}</span>
+            {brand.name}
           </p>
           <p className="mt-0.5 text-xs text-muted">{ruleLabel(brand)}</p>
         </div>
@@ -290,9 +284,9 @@ function BrandCard({
         ) : null}
       </div>
       <PackInfo brand={brand} months={months} />
-      <div className="mt-3 flex gap-2">
+      <div className="mt-auto flex gap-2 pt-3">
         <a
-          href={brand.url}
+          href={`/go/${brand.id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex flex-1 items-center justify-center gap-1 rounded-2xl bg-sand py-2.5 text-xs font-bold text-ink active:scale-[.98]"

@@ -1,4 +1,5 @@
 import { SAMPLE_BRANDS, type OpenRule, type SampleBrand } from "@/data/samples";
+import { SITE_URL } from "./site";
 
 /**
  * 체험팩 오픈 시각 계산. 서버는 UTC 로 돌지만 시간표는 전부 한국 시각이라,
@@ -9,6 +10,11 @@ const DAY_MS = 86_400_000;
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 /** 한국 시각 기준의 "지금"을 UTC 필드에 담은 Date */
+/** 체험팩 공식 홈으로 가는 중계 주소 (절대 주소 — 캘린더 앱은 상대 주소를 못 연다) */
+export function goUrl(brand: SampleBrand, src: "samples" | "cal" = "cal"): string {
+  return new URL(`/go/${brand.id}${src === "cal" ? "?src=cal" : ""}`, SITE_URL).toString();
+}
+
 export function nowKST(now = new Date()): Date {
   return new Date(now.getTime() + KST_MS);
 }
@@ -181,8 +187,9 @@ export function buildCalendar(
       "DURATION:PT15M",
       `RRULE:${rrule}`,
       `SUMMARY:${icsEscape(`${brand.emoji} ${brand.name} 체험팩 오픈${brand.limit ? ` (${brand.limit}명)` : ""}`)}`,
-      `DESCRIPTION:${icsEscape(`${ruleLabel(brand)}\n${brand.url}`)}`,
-      `URL:${brand.url}`,
+      // 공식 홈 대신 /go 중계 주소 — 알림에서 눌러 들어간 클릭도 집계된다 (src=cal)
+      `DESCRIPTION:${icsEscape(`${ruleLabel(brand)}\n${goUrl(brand)}`)}`,
+      `URL:${goUrl(brand)}`,
       "BEGIN:VALARM",
       "ACTION:DISPLAY",
       `DESCRIPTION:${icsEscape(`${brand.name} 체험팩 ${before}분 뒤 오픈`)}`,

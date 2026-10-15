@@ -5,8 +5,10 @@ import Cards from "./Cards";
 import { GUIDE_CARDS } from "./card-data";
 
 export const metadata: Metadata = {
-  title: "이유식 수첩 · 소개",
-  description: "새 재료는 하나씩, 3일씩. 아기 생년월일 하나로 돌아가는 이유식 기록 앱",
+  title: "앱 소개 — 새 재료는 하나씩, 3일씩",
+  description:
+    `이유식 수첩이 뭘 하는 앱인지 카드 ${GUIDE_CARDS.length}장으로. 끼니를 적으면 3일 관찰이 시작되고, 수유 시계와 7일 차트, 재료 도장깨기, 이상반응 기록, 시판 이유식 체험팩 시간표까지. 카드는 사진으로 저장해 보낼 수 있어요.`,
+  alternates: { canonical: "/guide" },
 };
 
 /**
@@ -58,6 +60,15 @@ export default function GuidePage() {
 
       <p className="mt-6 text-center text-[11px] leading-relaxed text-muted">
         재료 시작 월령은 식약처·대한소아과학회 공개 지침 기준이에요. 아기 상태는 소아과 선생님과 상의하세요.
+      </p>
+      <p className="mt-3 text-center text-[11px] text-muted">
+        <Link href="/privacy" className="underline">
+          개인정보처리방침
+        </Link>
+        {" · "}
+        <Link href="/terms" className="underline">
+          이용약관
+        </Link>
       </p>
     </main>
   );

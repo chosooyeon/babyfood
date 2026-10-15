@@ -1,26 +1,34 @@
+import type { Metadata } from "next";
 import Screen from "@/components/Screen";
 import { Card, Empty, SectionTitle } from "@/components/ui";
-import { getBaby, getRecentMeals, getTrials } from "@/lib/queries";
+import FeedList from "@/components/FeedList";
+import { getBaby, getBottlesBetween, getMealsInMonth, getTrials } from "@/lib/queries";
+import MonthCalendar from "@/components/MonthCalendar";
 import { BY_ID } from "@/data/ingredients";
-import { REACTION_META } from "@/lib/types";
-import { dayCount, parseDate } from "@/lib/stage";
+import { dayCount, monthRange, parseDate, today } from "@/lib/stage";
 import { effectiveStatus } from "@/lib/derive";
-import type { Meal } from "@/lib/types";
 import { track } from "@/lib/track";
 
 export const dynamic = "force-dynamic";
 
+/** 한 집의 기록만 보이는 화면 — 검색에 나올 이유가 없다 */
+export const metadata: Metadata = {
+  title: "기록",
+  robots: { index: false, follow: true },
+};
+
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
-export default async function HistoryPage() {
+export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   await track("/history");
-  const [baby, meals, trials] = await Promise.all([getBaby(), getRecentMeals(), getTrials()]);
+  const { m } = await searchParams;
+  // ?m=2026-10 — 달력과 타임라인이 같은 달을 본다. 없거나 이상하면 이번 달
+  const ym = m && /^\d{4}-(0[1-9]|1[0-2])$/.test(m) ? m : today().slice(0, 7);
+  const { from, to } = monthRange(ym);
+  const [baby, meals, bottles, trials] = await Promise.all([getBaby(), getMealsInMonth(ym), getBottlesBetween(from, to), getTrials()]);
 
-  // 날짜별로 묶는다 (쿼리가 이미 날짜 내림차순이라 순서는 그대로 유지된다)
-  const byDate = meals.reduce<Map<string, Meal[]>>((acc, m) => {
-    (acc.get(m.date) ?? acc.set(m.date, []).get(m.date)!).push(m);
-    return acc;
-  }, new Map());
+  // 끼니든 분유든 있는 날짜를 최근 것부터. 하루 안의 정렬은 FeedList 가 시각순으로 한다
+  const dates = [...new Set([...meals.map((m) => m.date), ...bottles.map((b) => b.date)])].sort().reverse();
 
   const flagged = trials.filter((t) => effectiveStatus(t) === "allergic");
 
@@ -48,18 +56,28 @@ export default async function HistoryPage() {
         </>
       ) : null}
 
-      <SectionTitle right={meals.length > 0 ? `최근 ${meals.length}끼` : undefined}>
-        끼니 타임라인
+      <div className={flagged.length > 0 ? "mt-7" : ""}>
+        <MonthCalendar ym={ym} meals={meals} trials={trials} />
+      </div>
+
+      <SectionTitle
+        right={
+          meals.length || bottles.length
+            ? [meals.length ? `${meals.length}끼` : null, bottles.length ? `분유 ${bottles.length}회` : null].filter(Boolean).join(" · ")
+            : undefined
+        }
+      >
+        {Number(ym.slice(5))}월 타임라인
       </SectionTitle>
 
-      {byDate.size === 0 ? (
-        <Empty emoji="📖">기록이 쌓이면 여기 모여요</Empty>
+      {dates.length === 0 ? (
+        <Empty emoji="📖">{ym === today().slice(0, 7) ? "기록이 쌓이면 여기 모여요" : "이달엔 기록이 없어요"}</Empty>
       ) : (
         <div className="space-y-5">
-          {[...byDate].map(([date, items]) => {
+          {dates.map((date) => {
             const d = parseDate(date);
             return (
-              <section key={date}>
+              <section key={date} id={`d-${date}`} className="scroll-mt-4">
                 <div className="mb-2 flex items-baseline gap-2">
                   <b className="text-sm">
                     {d.getMonth() + 1}월 {d.getDate()}일 ({WEEK[d.getDay()]})
@@ -70,37 +88,7 @@ export default async function HistoryPage() {
                     </span>
                   ) : null}
                 </div>
-                <ul className="space-y-2">
-                  {items.map((m) => (
-                    <li key={m.id}>
-                      <Card className="p-3.5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[15px] font-extrabold">
-                              <span className="mr-1.5 text-[11px] text-muted">{m.slot}끼</span>
-                              {m.menu}
-                            </p>
-                            <p className="mt-1 text-xs text-muted">
-                              {m.ingredient_ids
-                                .map((id) => {
-                                  const i = BY_ID.get(id);
-                                  return i ? `${i.emoji} ${i.name}` : id;
-                                })
-                                .join("  ") || "재료 미기록"}
-                            </p>
-                            {m.note ? <p className="mt-1 text-xs text-muted">{m.note}</p> : null}
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-base">{REACTION_META[m.reaction].emoji}</p>
-                            {m.amount_ml ? (
-                              <p className="text-[11px] font-bold text-muted">{m.amount_ml}ml</p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </Card>
-                    </li>
-                  ))}
-                </ul>
+                <FeedList meals={meals.filter((m) => m.date === date)} bottles={bottles.filter((b) => b.date === date)} />
               </section>
             );
           })}

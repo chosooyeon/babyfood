@@ -32,7 +32,7 @@ export async function toggleSampleClaim(form: FormData) {
 
 export type TipResult = { ok: true } | { ok: false; error: string };
 
-/** "시간이 바뀌었어요 / 이 브랜드도 있어요" 제보. /admin/tips 에서 읽는다. */
+/** 문의·제보 (/settings/contact). brand 열에는 주제가 들어간다. /admin/tips 에서 읽는다. */
 export async function sendTip(
   _prev: TipResult | null,
   form: FormData,
@@ -49,7 +49,7 @@ export async function sendTip(
     .trim()
     .slice(0, 300);
   if (!brand || !detail)
-    return { ok: false, error: "브랜드와 내용을 적어주세요." };
+    return { ok: false, error: "내용을 적어주세요." };
 
   let url: string | null = null;
   if (urlRaw) {

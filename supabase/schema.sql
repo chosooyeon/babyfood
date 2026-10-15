@@ -26,8 +26,22 @@ create table if not exists meals (
   note           text,
   created_at     timestamptz not null default now()
 );
+-- 먹인 시각 (기기 시간 HH:MM). 1.3.0 에서 생김 — 그전 기록은 null 이라 끼니 순서로만 보인다
+alter table meals add column if not exists fed_at time;
 create index if not exists babies_household_idx    on babies (household);
 create index if not exists meals_household_date_idx on meals (household, date desc, slot);
+
+-- ── 분유 ─────────────────────────────────────────────────────
+-- 오늘 탭 수유 시계에 이유식과 같이 찍는다. 분량은 비워도 된다.
+create table if not exists bottles (
+  id         uuid primary key default gen_random_uuid(),
+  household  text not null,
+  date       date not null,
+  fed_at     time not null,
+  amount_ml  int,
+  created_at timestamptz not null default now()
+);
+create index if not exists bottles_household_date_idx on bottles (household, date desc, fed_at);
 
 -- ── 재료 도입 이력 (알레르기 3일 관찰) ────────────────────────
 -- 집 하나에 재료 하나당 한 행. 처음 먹인 날부터 3일을 센다.
@@ -72,5 +86,6 @@ create index if not exists tips_created_idx on tips (created_at desc);
 alter table babies enable row level security;
 alter table meals  enable row level security;
 alter table trials enable row level security;
+alter table bottles enable row level security;
 alter table sample_claims enable row level security;
 alter table tips   enable row level security;

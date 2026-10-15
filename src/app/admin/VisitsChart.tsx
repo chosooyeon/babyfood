@@ -2,7 +2,21 @@
  * 최근 14일 방문 수 막대. 시리즈가 하나라 색은 peach 하나만 쓰고,
  * 값은 가장 높은 날과 오늘에만 직접 적는다. 나머지는 막대에 올리면(title) 보인다.
  */
-export default function VisitsChart({ days }: { days: { day: string; n: number; devices: number }[] }) {
+export default function VisitsChart({
+  days,
+  label = "최근 14일 방문 수",
+  unit = "회",
+  subLabel = "기기",
+  subUnit = "대",
+}: {
+  days: { day: string; n: number; devices: number }[];
+  /** aria-label */
+  label?: string;
+  unit?: string;
+  /** 두 번째 수(devices)를 뭐라고 부를지 — 방문은 "기기 N대", 클릭은 "집 N곳" */
+  subLabel?: string;
+  subUnit?: string;
+}) {
   const W = 320;
   const H = 130;
   const top = 20;
@@ -15,7 +29,7 @@ export default function VisitsChart({ days }: { days: { day: string; n: number; 
   const last = days.length - 1;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="최근 14일 방문 수">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={label}>
       <line x1={0} x2={W} y1={top + plotH} y2={top + plotH} className="stroke-line" strokeWidth={1} />
       {days.map((d, i) => {
         const x = i * (bw + gap);
@@ -23,12 +37,12 @@ export default function VisitsChart({ days }: { days: { day: string; n: number; 
         const y = top + plotH - h;
         const r = Math.min(4, bw / 2, h);
         const date = new Date(d.day + "T00:00:00");
-        const label = `${date.getMonth() + 1}/${date.getDate()}`;
+        const dayLabel = `${date.getMonth() + 1}/${date.getDate()}`;
         const showValue = d.n > 0 && (i === maxIdx || i === last);
         const showDay = i % 2 === last % 2;
         return (
           <g key={d.day}>
-            <title>{`${label} · ${d.n}회 · 기기 ${d.devices}대`}</title>
+            <title>{`${dayLabel} · ${d.n}${unit} · ${subLabel} ${d.devices}${subUnit}`}</title>
             {h > 0 ? (
               <path
                 d={`M${x},${y + r} a${r},${r} 0 0 1 ${r},-${r} h${bw - 2 * r} a${r},${r} 0 0 1 ${r},${r} V${top + plotH} H${x} Z`}
@@ -42,7 +56,7 @@ export default function VisitsChart({ days }: { days: { day: string; n: number; 
             ) : null}
             {showDay ? (
               <text x={x + bw / 2} y={H - 5} textAnchor="middle" className="fill-muted text-[9px] font-semibold">
-                {label}
+                {dayLabel}
               </text>
             ) : null}
           </g>

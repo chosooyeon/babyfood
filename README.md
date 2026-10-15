@@ -15,7 +15,7 @@
 
 ## 화면
 
-오늘 · 재료 · 기록 · 설정 네 탭과, 홈 오른쪽 위 🎁 버튼으로 가는 체험팩 화면.
+오늘 · 먹인 것 · 기록 · 체험팩 · 설정 다섯 탭. 재료 도장깨기는 오늘 탭의 진행률 카드에서 들어간다.
 각 화면이 뭘 하는지는 **/admin/spec 기획서**(코드에서 읽어 와 항상 최신)와 **/guide 소개 카드**에 있다.
 여기엔 적지 않는다 — 세 군데 따로 고치다 보면 어긋난다.
 
@@ -68,6 +68,34 @@ gh repo create babyfood --private --source=. --push
 배포된 주소를 **Safari 로** 열고 (크롬 X) → 공유 버튼 → **홈 화면에 추가**.
 주소창 없는 전체화면 앱으로 뜬다.
 
+## 버전 올릴 때 DB
+
+테이블·열이 늘어난 버전(1.1.0 체험팩, 1.3.0 분유·먹인 시각·체험팩 클릭)으로 올리면 Supabase SQL Editor 에서
+`supabase/schema.sql` 과 `supabase/admin.sql` 을 한 번씩 더 돌린다. 둘 다 `if not exists` / `create or replace` 라
+몇 번을 돌려도 안전하고, 기존 기록은 그대로다. 안 돌리면 분유 기록이 "저장하지 못했어요"가 되고 /admin 표에 테이블이 빠진다.
+
+## 검색엔진·공유 (SEO)
+
+주소·이름·설명은 `src/lib/site.ts` 한 곳에서 읽는다. 생기는 것:
+
+| 무엇 | 어디서 |
+|---|---|
+| `robots.txt` · `sitemap.xml` | `src/app/robots.ts`, `src/app/sitemap.ts` — 공개 화면만 넣고 관리·API·포스터는 막는다 |
+| 화면별 제목·설명·canonical | 각 `page.tsx` 의 `metadata`. 기록·설정·관리는 noindex |
+| 공유 미리보기 그림 `public/og.png` | `npm run build && npm run cards` (`/guide/og` 를 Chrome 으로 찍는다) |
+| 구조화 데이터 (schema.org WebApplication) | `src/app/layout.tsx` |
+
+서치콘솔에 등록하려면 Vercel 환경변수에 `GOOGLE_SITE_VERIFICATION`(구글 HTML 태그의 content 값),
+`NAVER_SITE_VERIFICATION`(네이버 메타태그의 content 값)을 넣고 다시 배포한다. 코드는 안 고쳐도 된다.
+등록 뒤 사이트맵 주소 `/sitemap.xml` 을 제출한다. 도메인을 바꾸면 `NEXT_PUBLIC_SITE_URL` 하나만 바꾼다.
+
+## 개인정보처리방침·이용약관
+
+`/privacy`, `/terms`. 글은 그 두 `page.tsx` 에 있고, 운영자 이름·연락처·DB 리전·시행일은
+`src/data/legal.ts` 에 있다. **배포 전에 운영자와 연락처를 채운다** (개인정보보호법상 보호책임자 표기).
+수집 항목이나 보관 기간을 바꾸는 코드 변경(track.ts, schema.sql, proxy.ts)을 하면 처리방침 1항과
+시행일도 같이 고친다. 삭제권은 설정 탭 '이 수첩 기록 모두 지우기' 로 실제로 동작한다.
+
 ## 수첩 코드 (기기별 기록 분리)
 
 앱은 로그인이 없지만 기록은 집마다 갈라진다. 처음 접속한 기기는 `src/proxy.ts` 에서
@@ -87,7 +115,12 @@ gh repo create babyfood --private --source=. --push
 - Supabase 연결 상태·응답 시간, Vercel 리전·배포 커밋
 - DB 용량 (무료 한도 500MB 대비), 테이블별 행 수·용량·마지막 기록
 - 최근 14일 방문 수, 7일간 어떤 기기가 몇 번 썼는지, 서버 응답 속도(평균·p95)
+- 체험팩 링크 클릭 — 브랜드별 전체·7일·누른 집 수·캘린더 알림 경유. `/samples` 의 "사이트 열기"와 알림 링크가
+  `/go/{brand}` 를 거치며 `sample_clicks` 에 한 줄 남기고 공식 홈으로 302. 업체 제안서용 숫자라 지우지 않는다
 - 최근 동작 30건
+- **내 기기 제외** — 관리 키로 들어온 기기에 `bf_me` 쿠키(경로 /)가 심어져, 그 기기의 방문·클릭은 `mine=true` 로
+  저장되고 모든 집계에서 빠진다(목록엔 "나" 표시). 폰도 /admin 에 한 번 들어오면 된다. 현황 화면에서 끄고 켤 수 있고,
+  로컬 `npm run dev`·Vercel 프리뷰(`VERCEL_ENV !== "production"`)는 항상 "나"다
 - 탭: 현황 · 기획서(/admin/spec) · 제보(/admin/tips, 체험팩 시간표 제보함)
 
 처음 한 번 Supabase **SQL Editor** 에서 `supabase/admin.sql` 을 실행해야 한다
