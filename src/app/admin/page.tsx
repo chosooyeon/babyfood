@@ -11,7 +11,7 @@ import { track } from "@/lib/track";
 import { SAMPLE_BY_ID } from "@/data/samples";
 import AdminLogin from "./AdminLogin";
 import Shell from "./Shell";
-import Slides from "./Slides";
+import Slides from "@/components/Slides";
 import VisitsChart from "./VisitsChart";
 import DeviceList, { type Device } from "./DeviceList";
 import { adminLogout, setMeDevice } from "./actions";

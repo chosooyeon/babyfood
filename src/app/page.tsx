@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import Screen from "@/components/Screen";
 import SubmitButton from "@/components/SubmitButton";
 import { Card, SectionTitle, Empty, Bar } from "@/components/ui";
+import Slides from "@/components/Slides";
 import MealSheet from "@/components/MealSheet";
 import TrialSheet from "@/components/TrialSheet";
 import { getBaby, getBottlesOn, getMealsOn, getTrials } from "@/lib/queries";
@@ -162,83 +163,7 @@ export default async function TodayPage() {
         )}
       </Card>
 
-      {/* ── 관찰중 ── */}
-      {observing.length > 0 ? (
-        <div className="mt-4 space-y-2">
-          {observing.map((s) => {
-            const passed = OBSERVE_DAYS - s.observeLeft;
-            return (
-              <Card
-                key={s.ingredient.id}
-                className="border-butter/40 bg-butter-soft"
-              >
-                <div className="flex items-center justify-between">
-                  <b className="text-sm">
-                    {s.ingredient.emoji} {s.ingredient.name} 관찰 {passed + 1}
-                    일차
-                  </b>
-                  <span className="text-[11px] font-bold text-butter">
-                    {shortDate(observeEndDate(s.trial!))} 해제
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <Bar value={(passed + 1) / OBSERVE_DAYS} tone="butter" />
-                </div>
-                <p className="mt-2 text-xs text-ink/70">
-                  {shortDate(observeEndDate(s.trial!))}까지 새 재료는 쉬어가요.
-                  이상이 있으면 바로 기록하세요.
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <form action={setTrialStatus} className="flex-1">
-                    <input
-                      type="hidden"
-                      name="ingredient_id"
-                      value={s.ingredient.id}
-                    />
-                    <input type="hidden" name="status" value="safe" />
-                    <SubmitButton
-                      pendingLabel="저장 중…"
-                      className="w-full rounded-xl bg-mint py-2.5 text-xs font-bold text-white"
-                    >
-                      괜찮아요 👍
-                    </SubmitButton>
-                  </form>
-                  <TrialSheet
-                    ingredientId={s.ingredient.id}
-                    ingredientName={s.ingredient.name}
-                    emoji={s.ingredient.emoji}
-                    current="testing"
-                    trigger={
-                      <span className="block rounded-xl bg-berry px-4 py-2.5 text-xs font-bold text-white">
-                        이상반응 ⚠
-                      </span>
-                    }
-                  />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      ) : null}
-
-      {/* ── 수유 시계 ── */}
-      <SectionTitle
-        right={
-          <Link href="/feeds" className="flex items-center gap-0.5">
-            먹인 것 보기 <ChevronRight size={13} />
-          </Link>
-        }
-      >
-        오늘 먹은 시간
-      </SectionTitle>
-      <Card>
-        <FeedClock
-          meals={meals.filter((m) => m.fed_at).map((m) => ({ time: m.fed_at!, amount: m.amount_ml }))}
-          bottles={bottles.map((b) => ({ time: b.fed_at, amount: b.amount_ml }))}
-        />
-        <BottleForm date={at} />
-      </Card>
-
+      {/* ── 끼니 기록 — 인사 카드 바로 아래 */}
       <MealSheet
         date={at}
         info={{
@@ -250,47 +175,145 @@ export default async function TodayPage() {
         watchingNames={observing.map((s) => s.ingredient.name)}
       />
 
-      {/* ── 다음 재료 추천 ── */}
-      <SectionTitle>다음에 시도해볼 재료</SectionTitle>
+      {/* ── 아래는 옆으로 넘기는 세 장: 먹은 시간 · 관찰 · 다음 재료 */}
+      <div className="mt-5">
+        <Slides
+          slides={[
+            {
+              id: "clock",
+              title: "오늘 먹은 시간",
+              emoji: "🕐",
+              content: (
+                <Card>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-[15px] font-extrabold">오늘 먹은 시간</h2>
+                    <Link href="/feeds" className="flex items-center gap-0.5 text-xs font-semibold text-muted">
+                      먹인 것 보기 <ChevronRight size={13} />
+                    </Link>
+                  </div>
+                  <div className="mt-3">
+                    <FeedClock
+                      meals={meals.filter((m) => m.fed_at).map((m) => ({ time: m.fed_at!, amount: m.amount_ml }))}
+                      bottles={bottles.map((b) => ({ time: b.fed_at, amount: b.amount_ml }))}
+                    />
+                  </div>
+                  <BottleForm date={at} />
+                </Card>
+              ),
+            },
+            {
+              id: "watch",
+              title: observing.length > 0 ? `관찰 ${observing.length}` : "관찰",
+              emoji: "👀",
+              content:
+                observing.length === 0 ? (
+                  <Empty emoji="🌱">
+                    지금 관찰 중인 재료가 없어요.
+                    <br />
+                    끼니에 처음 먹는 재료를 넣으면 {OBSERVE_DAYS}일 관찰이 시작돼요.
+                  </Empty>
+                ) : (
+                  <div className="space-y-2">
+                    {observing.map((s) => {
+                      const passed = OBSERVE_DAYS - s.observeLeft;
+                      return (
+                        <Card key={s.ingredient.id} className="border-butter/40 bg-butter-soft">
+                          <div className="flex items-center justify-between">
+                            <b className="text-sm">
+                              {s.ingredient.emoji} {s.ingredient.name} 관찰 {passed + 1}일차
+                            </b>
+                            <span className="text-[11px] font-bold text-butter">
+                              {shortDate(observeEndDate(s.trial!))} 해제
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <Bar value={(passed + 1) / OBSERVE_DAYS} tone="butter" />
+                          </div>
+                          <p className="mt-2 text-xs text-ink/70">
+                            {shortDate(observeEndDate(s.trial!))}까지 새 재료는 쉬어가요. 이상이 있으면 바로 기록하세요.
+                          </p>
+                          <div className="mt-3 flex gap-2">
+                            <form action={setTrialStatus} className="flex-1">
+                              <input type="hidden" name="ingredient_id" value={s.ingredient.id} />
+                              <input type="hidden" name="status" value="safe" />
+                              <SubmitButton
+                                pendingLabel="저장 중…"
+                                className="w-full rounded-xl bg-mint py-2.5 text-xs font-bold text-white"
+                              >
+                                괜찮아요 👍
+                              </SubmitButton>
+                            </form>
+                            <TrialSheet
+                              ingredientId={s.ingredient.id}
+                              ingredientName={s.ingredient.name}
+                              emoji={s.ingredient.emoji}
+                              current="testing"
+                              trigger={
+                                <span className="block rounded-xl bg-berry px-4 py-2.5 text-xs font-bold text-white">
+                                  이상반응 ⚠
+                                </span>
+                              }
+                            />
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ),
+            },
+            {
+              id: "next",
+              title: "다음 재료",
+              emoji: "🥕",
+              content: (
+                <>
+                  <Card>
+                    <h2 className="text-[15px] font-extrabold">다음에 시도해볼 재료</h2>
+                    {suggestions.length === 0 ? (
+                      <p className="mt-3 rounded-2xl bg-sand px-4 py-3 text-xs text-muted">
+                        {observing.length > 0
+                          ? "관찰이 끝나면 다음 재료를 추천해드릴게요"
+                          : "이번 단계에서 시도할 재료를 다 먹여봤어요!"}
+                      </p>
+                    ) : (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {suggestions.map((s) => (
+                          <Link
+                            key={s.ingredient.id}
+                            href={`/ingredients?open=${s.ingredient.id}`}
+                            className="rounded-full border border-line bg-cream px-4 py-2.5 text-[13px] font-bold"
+                          >
+                            {s.ingredient.emoji} {s.ingredient.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
 
-      {suggestions.length === 0 ? (
-        <Empty emoji="⏳">
-          {observing.length > 0
-            ? "관찰이 끝나면 다음 재료를 추천해드릴게요"
-            : "이번 단계에서 시도할 재료를 다 먹여봤어요!"}
-        </Empty>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {suggestions.map((s) => (
-            <Link
-              key={s.ingredient.id}
-              href={`/ingredients?open=${s.ingredient.id}`}
-              className="rounded-full border border-line bg-card px-4 py-2.5 text-[13px] font-bold"
-            >
-              {s.ingredient.emoji} {s.ingredient.name}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* ── 재료 도장깨기 — 하단 탭에서 빠진 대신 여기서 들어간다 */}
-      <Link
-        href="/ingredients"
-        className="mt-3 block rounded-blob border border-line bg-card p-4 shadow-[0_2px_10px_rgba(160,130,100,.06)] active:scale-[.99]"
-      >
-        <div className="flex items-center justify-between">
-          <b className="text-sm">🥕 재료 도장깨기</b>
-          <span className="flex items-center gap-0.5 text-xs font-bold text-muted tabular-nums">
-            {done}/{total} 깸 <ChevronRight size={13} />
-          </span>
-        </div>
-        <div className="mt-2">
-          <Bar value={total ? done / total : 0} />
-        </div>
-        <p className="mt-2 text-xs text-muted [word-break:keep-all]">
-          먹어봄 · 관찰중 · 이상반응 · 아직 안 먹어봄을 한눈에. 월령이 안 된 재료는 잠겨 있어요.
-        </p>
-      </Link>
+                  {/* 재료 도장깨기 — 하단 탭에서 빠진 대신 여기서 들어간다 */}
+                  <Link
+                    href="/ingredients"
+                    className="mt-3 block rounded-blob border border-line bg-card p-4 shadow-[0_2px_10px_rgba(160,130,100,.06)] active:scale-[.99]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <b className="text-sm">🥕 재료 도장깨기</b>
+                      <span className="flex items-center gap-0.5 text-xs font-bold text-muted tabular-nums">
+                        {done}/{total} 깸 <ChevronRight size={13} />
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <Bar value={total ? done / total : 0} />
+                    </div>
+                    <p className="mt-2 text-xs text-muted [word-break:keep-all]">
+                      먹어봄 · 관찰중 · 이상반응 · 아직 안 먹어봄을 한눈에. 월령이 안 된 재료는 잠겨 있어요.
+                    </p>
+                  </Link>
+                </>
+              ),
+            },
+          ]}
+        />
+      </div>
     </Screen>
   );
 }
