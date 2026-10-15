@@ -89,19 +89,18 @@ export default function FeedClock({ meals, bottles }: { meals: Feed[]; bottles: 
       {/* 가운데 정보 원 — 조각 위에 얹어 가운데를 비운다 */}
       <circle cx={C} cy={C} r={R_INNER} className="fill-card" />
       <circle cx={C} cy={C} r={R_INNER} className="fill-none stroke-line" strokeWidth={1} />
+      {/* 두 줄 다 가운데 정렬 — 색 점은 글자 앞에 ● 로 넣어 줄 전체가 한 덩어리로 가운데 온다 */}
       <g style={{ fontWeight: 800 }}>
-        <circle cx={C - 38} cy={C - 17} r={3.5} className="fill-peach" />
-        <text x={C - 31} y={C - 17} dominantBaseline="central" className="fill-ink" style={{ fontSize: 10.5 }}>
-          이유식 {meals.length}끼
+        <text x={C} y={C - 17} textAnchor="middle" dominantBaseline="central" className="fill-ink" style={{ fontSize: 10.5 }}>
+          <tspan className="fill-peach" style={{ fontSize: 8 }}>●</tspan> 이유식 {meals.length}끼
           {mealMl ? (
             <tspan className="fill-muted" style={{ fontSize: 9, fontWeight: 600 }}>
               {" "}· {mealMl}ml
             </tspan>
           ) : null}
         </text>
-        <circle cx={C - 38} cy={C} r={3.5} className="fill-sky" />
-        <text x={C - 31} y={C} dominantBaseline="central" className="fill-ink" style={{ fontSize: 10.5 }}>
-          분유 {bottles.length}회
+        <text x={C} y={C} textAnchor="middle" dominantBaseline="central" className="fill-ink" style={{ fontSize: 10.5 }}>
+          <tspan className="fill-sky" style={{ fontSize: 8 }}>●</tspan> 분유 {bottles.length}회
           {bottleMl ? (
             <tspan className="fill-muted" style={{ fontSize: 9, fontWeight: 600 }}>
               {" "}· {bottleMl}ml
