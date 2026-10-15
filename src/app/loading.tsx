@@ -6,10 +6,7 @@ export default function Loading() {
   return (
     <Screen>
       <div className="rounded-blob bg-peach-soft/60 p-5">
-        <div className="flex items-start justify-between">
-          <Skeleton className="h-3 w-28 bg-card/70" />
-          <Skeleton className="h-7 w-16 rounded-full bg-card/70" />
-        </div>
+        <Skeleton className="h-3 w-28 bg-card/70" />
         <Skeleton className="mt-3 h-7 w-44 bg-card/70" />
         <Skeleton className="mt-3 h-4 w-36 bg-card/70" />
         <div className="mt-4 flex gap-1.5">

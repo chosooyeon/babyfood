@@ -3,12 +3,15 @@ import type { ReactNode } from "react";
 export function Card({
   children,
   className = "",
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  /** 앵커 링크(#tip 같은)로 바로 올 수 있게 */
+  id?: string;
 }) {
   return (
-    <div className={`rounded-blob border border-line bg-card p-4 shadow-[0_2px_10px_rgba(160,130,100,.06)] ${className}`}>
+    <div id={id} className={`rounded-blob border border-line bg-card p-4 shadow-[0_2px_10px_rgba(160,130,100,.06)] ${className}`}>
       {children}
     </div>
   );

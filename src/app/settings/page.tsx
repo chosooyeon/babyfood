@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import type { Metadata } from "next";
 import Screen from "@/components/Screen";
 import { Card } from "@/components/ui";
 import SubmitButton from "@/components/SubmitButton";
@@ -10,8 +12,21 @@ import { getHousehold } from "@/lib/household";
 import { formatHouseholdCode } from "@/lib/household-code";
 import HouseholdForm from "./HouseholdForm";
 import { APP_VERSION } from "@/lib/version";
+import DeleteHousehold from "./DeleteHousehold";
+
+/** 한 집의 설정만 보이는 화면이라 검색에 나올 이유가 없다 */
+export const metadata: Metadata = {
+  title: "설정",
+  robots: { index: false, follow: true },
+};
 
 export const dynamic = "force-dynamic";
+
+/** 설정 아래 "더 보기" 줄 — 주소 · 아이콘 · 이름 · 한 줄 설명 */
+const MORE: [string, string, string, string][] = [
+  ["/settings/contact", "✉️", "문의·제보", "시간표가 다르거나, 불편하거나, 건의할 게 있으면"],
+  ["/guide", "📖", "앱 소개", "처음 보는 사람에게 보내는 카드. 저장해서 공유할 수 있어요"],
+];
 
 export default async function SettingsPage() {
   await track("/settings");
@@ -53,6 +68,17 @@ export default async function SettingsPage() {
           >
             저장
           </SubmitButton>
+          <p className="text-center text-[11px] leading-relaxed text-muted">
+            저장하면{" "}
+            <Link href="/terms" className="underline">
+              이용약관
+            </Link>
+            과{" "}
+            <Link href="/privacy" className="underline">
+              개인정보처리방침
+            </Link>
+            에 동의한 것으로 봐요. 이름은 별명도 괜찮아요.
+          </p>
         </form>
 
         {baby && stage ? (
@@ -79,6 +105,7 @@ export default async function SettingsPage() {
           폰을 바꾸거나 브라우저 데이터를 지우면 새 수첩이 열려요. 코드를 메모해 두면 언제든 되찾을 수
           있어요.
         </p>
+        <DeleteHousehold />
       </Card>
 
       <Card className="mt-4">
@@ -98,29 +125,41 @@ export default async function SettingsPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-muted">
-          출처: 식약처·대한소아과학회 공개 지침을 정리한 일반 기준이에요. 보고 있는 이유식 책과
-          다르면 <code className="rounded bg-sand px-1">src/data/ingredients.ts</code> 와{" "}
-          <code className="rounded bg-sand px-1">src/lib/stage.ts</code> 의 값을 책 기준으로
-          고치고 <code className="rounded bg-sand px-1">source</code> 에 책 이름·쪽수를 적어두세요.
+        <p className="mt-3 text-[11px] leading-relaxed text-muted [word-break:keep-all]">
+          출처: 식약처·대한소아과학회 공개 지침을 정리한 일반 기준이에요. 보고 계신 이유식 책과 다르면 책 이름·쪽수와
+          함께 알려주세요. 확인하고 맞출게요.
         </p>
       </Card>
 
-      <Link
-        href="/samples"
-        className="mt-4 block rounded-2xl border border-peach/40 bg-peach-soft/60 px-4 py-3 text-center text-sm font-bold text-ink"
-      >
-        🎁 시판 이유식 체험팩 신청 시간표
-      </Link>
 
-      <Link
-        href="/guide"
-        className="mt-4 block rounded-2xl border border-line bg-card px-4 py-3 text-center text-sm font-bold text-ink/80"
-      >
-        📖 이 앱 소개 보기 · 친구에게 보내기
-      </Link>
+      {/* 더 보기 — 설정 밖 화면으로 가는 줄 목록. 아이콘 · 이름 · 한 줄 설명 · 화살표 */}
+      <Card className="mt-4 p-2">
+        <ul className="divide-y divide-line">
+          {MORE.map(([href, emoji, label, desc]) => (
+            <li key={href}>
+              <Link href={href} className="flex items-center gap-3 rounded-2xl px-3 py-3 active:bg-sand">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand text-lg">{emoji}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{label}</span>
+                  <span className="block truncate text-[11px] text-muted">{desc}</span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-muted" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
 
-      <p className="mt-6 text-center text-[11px] text-muted">이유식 수첩 v{APP_VERSION}</p>
+      <p className="mt-6 text-center text-[11px] text-muted">
+        <Link href="/privacy" className="underline">
+          개인정보처리방침
+        </Link>
+        {" · "}
+        <Link href="/terms" className="underline">
+          이용약관
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-[11px] text-muted">이유식 수첩 v{APP_VERSION}</p>
     </Screen>
   );
 }

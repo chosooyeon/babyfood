@@ -15,7 +15,7 @@ import { setTipDone } from "../actions";
 export const dynamic = "force-dynamic";
 
 /**
- * /samples 의 제보함. 읽고 src/data/samples.ts 를 고친 뒤 "반영함"을 누른다.
+ * 문의·제보함 (/settings/contact 에서 들어온다). 읽고 코드를 고친 뒤 "반영함"을 누른다.
  * 제보는 코드에 자동 반영되지 않는다 — 누가 적어도 되는 폼이라 사람이 한 번 봐야 한다.
  */
 export default async function TipsPage() {
@@ -33,11 +33,12 @@ export default async function TipsPage() {
   return (
     <Shell tab="tips">
       <Card className="bg-peach-soft/60">
-        <p className="text-xs font-bold text-muted">체험팩 시간표 제보</p>
+        <p className="text-xs font-bold text-muted">문의·제보함</p>
         <p className="mt-1 text-sm leading-relaxed text-ink/80">
-          지금 시간표 출처는 <b>{SAMPLES_SOURCE}</b>. 맞는 제보면{" "}
-          <code className="rounded bg-card px-1">src/data/samples.ts</code> 를 고치고 출처 날짜를 올린 뒤
-          “반영함”을 눌러요.
+          /settings/contact 로 들어온 것. 주제가 체험팩이면 <code className="rounded bg-card px-1">src/data/samples.ts</code>
+          (지금 출처 <b>{SAMPLES_SOURCE}</b>), 재료·단계 기준이면{" "}
+          <code className="rounded bg-card px-1">src/data/ingredients.ts</code> · <code className="rounded bg-card px-1">src/lib/stage.ts</code>{" "}
+          를 고친 뒤 “반영함”을 눌러요.
         </p>
       </Card>
 

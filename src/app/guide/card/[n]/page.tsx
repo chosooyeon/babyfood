@@ -22,6 +22,8 @@ export default async function PosterPage({
       className="relative overflow-hidden bg-cream text-ink"
       style={{ width: 1080, height: 1350 }}
     >
+      {/* Chrome 으로 찍을 때 Next 개발 배지(N)가 왼쪽 아래에 같이 찍히지 않게. 이 화면에서만 */}
+      <style>{"nextjs-portal{display:none}"}</style>
       <CardArt card={card} scale={4.4} />
       <div className="relative flex h-full flex-col px-[88px] pt-[96px] pb-[88px]">
         <div className="flex flex-1 flex-col justify-center pb-[60px]">

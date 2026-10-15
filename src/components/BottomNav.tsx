@@ -3,12 +3,14 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Home, Carrot, CalendarDays, Settings, type LucideIcon } from "lucide-react";
+import { Home, Milk, CalendarDays, Gift, Settings, type LucideIcon } from "lucide-react";
 
-const TABS: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: "/", label: "오늘", Icon: Home },
-  { href: "/ingredients", label: "재료", Icon: Carrot },
+/** also: 이 탭이 켜진 채로 보여줄 다른 화면 — 재료 도장깨기는 오늘 탭에서 들어가는 하위 화면 */
+const TABS: { href: string; label: string; Icon: LucideIcon; also?: string[] }[] = [
+  { href: "/", label: "오늘", Icon: Home, also: ["/ingredients"] },
+  { href: "/feeds", label: "먹인 것", Icon: Milk },
   { href: "/history", label: "기록", Icon: CalendarDays },
+  { href: "/samples", label: "체험팩", Icon: Gift },
   { href: "/settings", label: "설정", Icon: Settings },
 ];
 
@@ -26,8 +28,10 @@ export default function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="mx-auto flex max-w-md">
-        {TABS.map(({ href, label, Icon }) => {
-          const here = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        {TABS.map(({ href, label, Icon, also }) => {
+          const here =
+            (href === "/" ? pathname === "/" : pathname.startsWith(href)) ||
+            (also?.some((p) => pathname.startsWith(p)) ?? false);
           const active = optimistic ? optimistic === href : here;
           return (
             <li key={href} className="flex-1">

@@ -4,9 +4,27 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { ADMIN_COOKIE, ADMIN_COOKIE_PATH, adminToken, isAdmin, safeEqual } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, ADMIN_COOKIE_PATH, ME_COOKIE, adminToken, isAdmin, safeEqual } from "@/lib/admin-auth";
+import { markThisDeviceMine } from "@/lib/track";
 
 const YEAR = 60 * 60 * 24 * 365;
+/** 400일 — 크롬이 허용하는 쿠키 수명의 상한 */
+const ME_MAX_AGE = 60 * 60 * 24 * 400;
+
+/**
+ * 이 기기를 "나"로 표시하는 쿠키 (경로 /). 방문·체험팩 클릭 기록이 mine=true 가 돼 통계에서 빠진다.
+ * 이 기기가 전에 남긴 기록도 같이 "나"로 바꾼다 — 안 그러면 오늘 들어온 수백 번이 남처럼 남는다.
+ */
+async function setMeCookie(token: string) {
+  (await cookies()).set(ME_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: ME_MAX_AGE,
+    path: "/",
+  });
+  await markThisDeviceMine();
+}
 
 export async function adminLogin(_prev: string | null, form: FormData): Promise<string | null> {
   const key = process.env.ADMIN_KEY;
@@ -19,14 +37,26 @@ export async function adminLogin(_prev: string | null, form: FormData): Promise<
     return "키가 달라요.";
   }
 
-  (await cookies()).set(ADMIN_COOKIE, await adminToken(key), {
+  const token = await adminToken(key);
+  (await cookies()).set(ADMIN_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: YEAR,
     path: ADMIN_COOKIE_PATH,
   });
+  // 관리 키를 아는 기기 = 내 기기. 여기서 누르는 건 통계에서 뺀다
+  await setMeCookie(token);
   redirect("/admin");
+}
+
+/** /admin 현황 — 이 기기의 "나" 표시를 켜고 끈다. 끄면 이 기기도 남처럼 집계된다 */
+export async function setMeDevice(form: FormData) {
+  const key = process.env.ADMIN_KEY;
+  if (!key || !(await isAdmin((await cookies()).get(ADMIN_COOKIE)?.value))) return;
+  if (form.get("on") === "1") await setMeCookie(await adminToken(key));
+  else (await cookies()).delete({ name: ME_COOKIE, path: "/" });
+  revalidatePath("/admin");
 }
 
 export async function adminLogout() {

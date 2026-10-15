@@ -8,6 +8,14 @@ import "server-only";
 export const ADMIN_COOKIE = "bf_admin";
 export const ADMIN_COOKIE_PATH = "/admin";
 
+/**
+ * "내 기기" 표시. /admin 에 로그인한 폰·컴퓨터에 같은 해시를 경로 "/" 로도 심어서,
+ * 그 기기에서 온 방문·체험팩 클릭은 mine=true 로 저장하고 통계에서 뺀다.
+ * bf_admin 은 경로가 /admin 이라 /samples 나 /go 요청에는 실리지 않기 때문에 따로 둔다.
+ * 잠금(로그아웃)해도 남는다 — 관리 화면을 닫은 것이지 남이 된 건 아니니까.
+ */
+export const ME_COOKIE = "bf_me";
+
 export async function adminToken(key: string): Promise<string> {
   const bytes = new TextEncoder().encode(`babyfood-admin::${key}`);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -28,3 +36,6 @@ export async function isAdmin(cookieValue: string | undefined): Promise<boolean>
   if (!key || !cookieValue) return false;
   return safeEqual(cookieValue, await adminToken(key));
 }
+
+/** bf_me 쿠키가 진짜인지 — 값이 bf_admin 과 같은 해시라 같은 함수로 검사한다 */
+export const isMe = isAdmin;

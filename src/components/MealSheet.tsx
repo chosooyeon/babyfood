@@ -27,6 +27,8 @@ export default function MealSheet({
   const [amount, setAmount] = useState("");
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [time, setTime] = useState("");
+  const [editTime, setEditTime] = useState(false);
 
   const tried = useMemo(() => new Set(info.tried), [info.tried]);
   const allowed = useMemo(() => new Set(info.allowed), [info.allowed]);
@@ -56,13 +58,19 @@ export default function MealSheet({
     setAmount("");
     setQuery("");
     setShowAll(false);
+    setEditTime(false);
     setOpen(false);
   }
 
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          // 열 때 기기 시간을 기본값으로. 나중에 적는 경우가 많아 고칠 수 있게 둔다
+          const d = new Date();
+          setTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+          setOpen(true);
+        }}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-blob bg-peach py-4.5 text-base font-extrabold text-white shadow-[0_6px_18px_rgba(255,155,122,.4)] active:scale-[.98]"
       >
         <Plus size={20} strokeWidth={3} />
@@ -116,6 +124,28 @@ export default function MealSheet({
               className="mt-1 w-full rounded-2xl border border-line bg-card px-4 py-3.5 text-base outline-none focus:border-peach"
             />
           </label>
+
+          {/* 시각은 시트를 연 기기 시간으로 자동 저장. 나중에 적는 경우만 펼쳐서 고친다 */}
+          {editTime ? (
+            <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
+              먹인 시각
+              <input
+                type="time"
+                name="fed_at"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="rounded-xl border border-line bg-card px-3 py-2 text-sm font-bold text-ink tabular-nums outline-none focus:border-peach"
+              />
+            </label>
+          ) : (
+            <p className="mt-2 text-[11px] text-muted">
+              <input type="hidden" name="fed_at" value={time} />
+              <b className="text-ink tabular-nums">{time}</b> 에 먹인 걸로 저장돼요 ·{" "}
+              <button type="button" onClick={() => setEditTime(true)} className="font-bold underline underline-offset-2">
+                시각 바꾸기
+              </button>
+            </p>
+          )}
 
           {/* ── 반응 ── */}
           <p className="mt-5 text-xs font-semibold text-muted">얼마나 잘 먹었나요?</p>
