@@ -9,7 +9,7 @@ import { OBSERVE_DAYS, REACTION_META, SYMPTOM_META } from "@/lib/types";
 import { HH_LEN } from "@/lib/household-code";
 import AdminLogin from "../AdminLogin";
 import Shell from "../Shell";
-import Slides from "../Slides";
+import Slides from "@/components/Slides";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,8 @@ const SCREENS: [string, string, string[]][] = [
     "오늘",
     "홈",
     [
-      "날짜 · 이름 · D+일차 · 개월 · 단계, 단계별 횟수/농도/1회 분량",
+      "인사 카드: 날짜 · 이름 · D+일차 · 개월 · 단계, 단계별 횟수/농도/1회 분량",
+      "인사 카드 바로 아래 ‘오늘 먹인 것 기록하기’ 버튼. 그 아래는 옆으로 넘기는 세 장(칩: 오늘 먹은 시간 · 관찰 N · 다음 재료)",
       "다음 단계 14일 전부터 ‘N일 뒤 중기로 넘어가요’",
       "관찰 중 배너: 며칠째인지, 언제 풀리는지, ‘괜찮아요’로 바로 안전 처리 또는 ‘이상반응’ 기록",
       "수유 시계: 24시간 파이에 먹인 시각마다 30분짜리 조각을 가운데까지 칠함 (이유식 복숭아색, 분유 하늘색). 가운데 작은 원 안에 끼니 수·분유 횟수·ml 과 ‘N분 전에 먹었어요’, 파이 바깥에 지금 표시. ‘먹인 것 보기’ 링크",
